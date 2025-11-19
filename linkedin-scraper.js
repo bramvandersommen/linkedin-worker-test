@@ -108,7 +108,7 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
     if (!wrapper) {
       wrapper = document.createElement('div');
       wrapper.className = 'particle-wrapper';
-      wrapper.style.cssText = 'position:absolute;inset:0;z-index:-2;pointer-events:none;overflow:visible;';
+      wrapper.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;';
       container.insertBefore(wrapper, container.firstChild);
       console.log('[LinkedIn AI] Created particle wrapper');
     }
@@ -137,7 +137,7 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
         particle.id = 'part-' + particlesID;
         particle.className = 'particle';
         particle.textContent = '⚡︎'; // CRITICAL: Symbol ⚡︎ not emoji ⚡
-        particle.style.cssText = 'position:absolute;left:42px;top:42px;width:40px;height:40px;font-size:32px;color:#D7FF56;display:block;pointer-events:none;font-family:Arial;';
+        particle.style.cssText = 'position:absolute;left:42px;top:42px;width:40px;height:40px;font-size:52px;color:#d4ff00;display:block;pointer-events:none;font-family:Arial;';
         wrapper.appendChild(particle);
 
         particlesID++;
@@ -363,6 +363,20 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
       if (container.classList.contains('processing')) return;
       btnBack.style.transform = 'rotateZ(15deg)';
       btnFront.style.transform = 'none';
+    });
+
+    // :active state - on press
+    container.addEventListener('mousedown', () => {
+      if (container.classList.contains('processing')) return;
+      btnBack.style.transform = 'translateZ(20px) rotateZ(10deg) rotateX(-20deg) rotateY(-20deg)';
+      btnFront.style.transform = 'translateZ(80px) translateY(-5px) rotateX(-5deg) rotateY(-10deg)';
+    });
+
+    // :active state - on release (back to hover state)
+    container.addEventListener('mouseup', () => {
+      if (container.classList.contains('processing')) return;
+      btnBack.style.transform = 'translateZ(20px) rotateZ(15deg) rotateX(-20deg) rotateY(-20deg)';
+      btnFront.style.transform = 'translateZ(80px) translateY(-5px) rotateX(5deg) rotateY(10deg)';
     });
 
     btnFront.addEventListener('click', () => {
