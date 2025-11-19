@@ -98,16 +98,19 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
   const MAX_PARTICLES = 20;
   const EMIT_COUNT = 15;
   const GRAVITY = 0.1;
-  const SPREAD = 5;
+  const SPREAD = 6;
 
   function createParticles(container) {
+    console.log('[LinkedIn AI] Creating particles in container:', container.id);
+
     // Create or get the particle wrapper (behind button with z-index: -1)
     let wrapper = container.querySelector('.particle-wrapper');
     if (!wrapper) {
       wrapper = document.createElement('div');
       wrapper.className = 'particle-wrapper';
-      wrapper.style.cssText = 'position:absolute;inset:0;z-index:-2;pointer-events:none;overflow:visible;';
+      wrapper.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;';
       container.insertBefore(wrapper, container.firstChild);
+      console.log('[LinkedIn AI] Created particle wrapper');
     }
 
     function rand(min, max) {
@@ -134,13 +137,15 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
         particle.id = 'part-' + particlesID;
         particle.className = 'particle';
         particle.textContent = '⚡︎'; // CRITICAL: Symbol ⚡︎ not emoji ⚡
-        particle.style.cssText = 'position:absolute;left:42px;top:42px;width:40px;height:40px;font-size:32px;color:#D7FF56;display:block;pointer-events:none;font-family:Arial;';
+        particle.style.cssText = 'position:absolute;left:42px;top:42px;width:40px;height:40px;font-size:42px;color:#D7FF56;display:block;pointer-events:none;font-family:Arial;';
         wrapper.appendChild(particle);
 
         particlesID++;
       }
     }
-    
+
+    console.log('[LinkedIn AI] Starting particle bursts, EMIT_COUNT:', EMIT_COUNT);
+
     function step() {
       particles.forEach((particle, index) => {
         particle.life++;
@@ -524,11 +529,14 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
       });
 
       const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
+      // Strip cardElement (HTMLElement can't be serialized for postMessage)
+      const serializablePosts = result.matches.map(({ cardElement, ...post }) => post);
       workerWindow.postMessage({
         type: 'VIP_QUEUE',
-        posts: result.matches,
+        posts: serializablePosts,
         timestamp: Date.now()
       }, workerOrigin);
+      console.log('[LinkedIn AI] Sent VIP_QUEUE with', serializablePosts.length, 'posts');
 
       updateStatus('✅ Posts sent to worker!');
 
