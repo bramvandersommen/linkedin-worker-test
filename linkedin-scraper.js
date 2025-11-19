@@ -101,6 +101,8 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
   const SPREAD = 5;
 
   function createParticles(container) {
+    console.log('[LinkedIn AI] Creating particles in container:', container.id);
+
     // Create or get the particle wrapper (behind button with z-index: -1)
     let wrapper = container.querySelector('.particle-wrapper');
     if (!wrapper) {
@@ -108,6 +110,7 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
       wrapper.className = 'particle-wrapper';
       wrapper.style.cssText = 'position:absolute;inset:0;z-index:-2;pointer-events:none;overflow:visible;';
       container.insertBefore(wrapper, container.firstChild);
+      console.log('[LinkedIn AI] Created particle wrapper');
     }
 
     function rand(min, max) {
@@ -140,7 +143,9 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
         particlesID++;
       }
     }
-    
+
+    console.log('[LinkedIn AI] Starting particle bursts, EMIT_COUNT:', EMIT_COUNT);
+
     function step() {
       particles.forEach((particle, index) => {
         particle.life++;
@@ -524,11 +529,14 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
       });
 
       const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
+      // Strip cardElement (HTMLElement can't be serialized for postMessage)
+      const serializablePosts = result.matches.map(({ cardElement, ...post }) => post);
       workerWindow.postMessage({
         type: 'VIP_QUEUE',
-        posts: result.matches,
+        posts: serializablePosts,
         timestamp: Date.now()
       }, workerOrigin);
+      console.log('[LinkedIn AI] Sent VIP_QUEUE with', serializablePosts.length, 'posts');
 
       updateStatus('✅ Posts sent to worker!');
 
