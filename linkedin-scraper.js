@@ -106,7 +106,7 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
     if (!wrapper) {
       wrapper = document.createElement('div');
       wrapper.className = 'particle-wrapper';
-      wrapper.style.cssText = 'position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:visible;';
+      wrapper.style.cssText = 'position:absolute;inset:0;z-index:-2;pointer-events:none;overflow:visible;';
       container.insertBefore(wrapper, container.firstChild);
     }
 
