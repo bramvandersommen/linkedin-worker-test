@@ -294,7 +294,7 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
   function createEnhancedFAB() {
     const container = document.createElement('div');
     container.id = 'ai-assistant-fab';
-    container.style.cssText = 'position:fixed;bottom:45px;right:25px;z-index:99999;perspective:500px;';
+    container.style.cssText = 'position:fixed;bottom:45px;right:25px;z-index:99999;perspective:500px;isolation:isolate;';
 
     const btnBack = document.createElement('div');
     btnBack.className = 'btn-back';
