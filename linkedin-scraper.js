@@ -100,11 +100,20 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
   const GRAVITY = 0.1;
   const SPREAD = 5;
 
-  function createParticles(wrapper) {
+  function createParticles(container) {
+    // Create or get the particle wrapper (behind button with z-index: -1)
+    let wrapper = container.querySelector('.particle-wrapper');
+    if (!wrapper) {
+      wrapper = document.createElement('div');
+      wrapper.className = 'particle-wrapper';
+      wrapper.style.cssText = 'position:absolute;inset:0;z-index:-1;pointer-events:none;overflow:visible;';
+      container.insertBefore(wrapper, container.firstChild);
+    }
+
     function rand(min, max) {
       return Math.random() * (max - min + 1) + min;
     }
-    
+
     function emit() {
       if (particles.length < MAX_PARTICLES) {
         particles.push({
@@ -120,14 +129,14 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
             rotation: rand(-10, 10)
           }
         });
-        
+
         const particle = document.createElement('span');
         particle.id = 'part-' + particlesID;
         particle.className = 'particle';
         particle.textContent = '⚡︎'; // CRITICAL: Symbol ⚡︎ not emoji ⚡
         particle.style.cssText = 'position:absolute;left:42px;top:42px;width:40px;height:40px;font-size:32px;color:#D7FF56;display:block;pointer-events:none;font-family:Arial;';
         wrapper.appendChild(particle);
-        
+
         particlesID++;
       }
     }
@@ -501,22 +510,25 @@ if (PAGE_TYPE === 'NOTIFICATIONS') {
         
         window.addEventListener('message', handler);
         
+        const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
+
         const pingInterval = setInterval(() => {
           if (workerWindow && !workerWindow.closed) {
-            workerWindow.postMessage({ type: 'PING' }, CONFIG.WORKER_URL);
+            workerWindow.postMessage({ type: 'PING' }, workerOrigin);
           }
         }, 200);
-        
+
         setTimeout(() => clearInterval(pingInterval), 10000);
       }).catch(err => {
         updateStatus('⚠️ Worker slow to respond, sending anyway...');
       });
 
+      const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
       workerWindow.postMessage({
         type: 'VIP_QUEUE',
         posts: result.matches,
         timestamp: Date.now()
-      }, CONFIG.WORKER_URL);
+      }, workerOrigin);
 
       updateStatus('✅ Posts sent to worker!');
 

@@ -604,6 +604,21 @@
     });
     
     updateStatus('Ready - Listening for posts...');
+
+    // Send WORKER_READY proactively on load to opener window
+    // This ensures the scraper knows we're ready even before PING arrives
+    if (window.opener) {
+      // Try both possible LinkedIn origins
+      ALLOWED_ORIGINS.forEach(origin => {
+        try {
+          window.opener.postMessage({ type: 'WORKER_READY' }, origin);
+          console.log('[Worker] Sent WORKER_READY to', origin);
+        } catch (e) {
+          // Origin mismatch, ignore
+        }
+      });
+      updateConnectionStatus(true);
+    }
   </script>
 </body>
 </html>
