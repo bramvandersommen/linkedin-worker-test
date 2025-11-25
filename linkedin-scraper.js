@@ -5,6 +5,7 @@
 // @description  LinkedIn AI Post Commenter scraper with OffhoursAI branding.
 // @match        https://www.linkedin.com/notifications/*
 // @match        https://linkedin.com/notifications/*
+// @match        *://www.linkedin.com/feed/*
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
@@ -332,7 +333,7 @@
         function createEnhancedFAB() {
             const container = document.createElement('div');
             container.id = 'ai-assistant-fab';
-            container.style.cssText = 'position:fixed;bottom:65px;right:35px;z-index:99999;perspective:500px;isolation:isolate;';
+            container.style.cssText = 'position:fixed;bottom:45px;left:35px;z-index:99999;perspective:500px;isolation:isolate;';
 
             const btnBack = document.createElement('div');
             btnBack.className = 'btn-back';
@@ -626,6 +627,25 @@
         let postData = {};
 
         function parseDraftsFromURL() {
+            // Try hash params first (new system)
+            const hash = window.location.hash.slice(1);
+            if (hash) {
+                const params = new URLSearchParams(hash);
+                const selected = parseInt(params.get('selected')) || 1;
+                drafts = [
+                    JSON.parse(params.get('draft1') || '""'),
+                    JSON.parse(params.get('draft2') || '""'),
+                    JSON.parse(params.get('draft3') || '""')
+                ].filter(Boolean);
+                
+                if (drafts.length > 0) {
+                    currentDraftIndex = selected - 1;
+                    postData.postID = Utils.extractPostID(window.location.href);
+                    return drafts;
+                }
+            }
+            
+            // Fallback to query params (old system)
             const params = new URLSearchParams(window.location.search);
             const draft1 = params.get('draft1');
             const draft2 = params.get('draft2');
@@ -647,7 +667,7 @@
             return new Promise((resolve) => {
                 const check = setInterval(() => {
                     const commentBox = document.querySelector('.ql-editor[contenteditable="true"]') ||
-                          document.querySelector('div[role="textbox"][contenteditable="true"]');
+                        document.querySelector('div[role="textbox"][contenteditable="true"]');
 
                     if (commentBox) {
                         clearInterval(check);
@@ -663,8 +683,11 @@
         }
 
         function injectDraft(commentBox, text) {
+            // Convert \n to <br> for contenteditable
+            const htmlContent = text.split('\n').map(line => line || '<br>').join('<br>');
+            
             if (commentBox.getAttribute('contenteditable') === 'true') {
-                commentBox.innerHTML = `<p>${text}</p>`;
+                commentBox.innerHTML = htmlContent;
                 commentBox.dispatchEvent(new Event('input', { bubbles: true }));
             } else {
                 commentBox.value = text;
@@ -729,6 +752,16 @@
             observer.observe(document.body, { childList: true, subtree: true });
         }
 
+        // Auto-click "Show more" button
+        setTimeout(() => {
+            const btn = document.querySelector('.feed-shared-inline-show-more-text__see-more-less-toggle, button[aria-label*="see more"]');
+            if (btn) {
+                btn.click();
+                console.log('[LinkedIn AI] Clicked "Show more"');
+            }
+        }, 500);
+
+        // Initialize injection
         (async () => {
             const parsedDrafts = parseDraftsFromURL();
             if (!parsedDrafts) {
@@ -744,7 +777,7 @@
                 return;
             }
 
-            injectDraft(commentBox, drafts[0]);
+            injectDraft(commentBox, drafts[currentDraftIndex]);
             createCycleButton(commentBox);
             watchForPostSubmit(commentBox);
 
