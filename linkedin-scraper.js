@@ -178,8 +178,6 @@
                 }
             }
 
-            console.log('[LinkedIn AI] Starting particle bursts, EMIT_COUNT:', EMIT_COUNT);
-
             function step() {
                 particles.forEach((particle, index) => {
                     particle.life++;
@@ -385,7 +383,7 @@
 
             statusOverlay = document.createElement('div');
             statusOverlay.className = 'status-overlay';
-            statusOverlay.style.cssText = 'position:absolute;bottom:140px;right:0;width:320px;max-height:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(20px);border:1px solid rgba(215,255,86,0.3);border-radius:12px;padding:0;overflow:hidden;opacity:0;transition:all 0.3s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;color:white;';
+            statusOverlay.style.cssText = 'position:absolute;bottom:140px;left:0;width:320px;max-height:0;background:rgba(0,0,0,0.92);backdrop-filter:blur(20px);border:1px solid rgba(215,255,86,0.3);border-radius:12px;padding:0;overflow:hidden;opacity:0;transition:all 0.3s ease;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;color:white;';
 
             container.addEventListener('mouseenter', () => {
                 if (container.classList.contains('processing')) return;
@@ -577,8 +575,10 @@
                 });
 
                 const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
-                // Strip cardElement (HTMLElement can't be serialized for postMessage)
-                const serializablePosts = result.matches.map(({ cardElement, ...post }) => post);
+                const serializablePosts = result.matches.map(({ cardElement, ...post }) => ({
+                    ...post,
+                    postUrl: post.postUrl || post.postID // Ensure postUrl is included
+                }));
                 workerWindow.postMessage({
                     type: 'VIP_QUEUE',
                     posts: serializablePosts,
@@ -674,6 +674,110 @@
             return drafts;
         }
 
+        function highlightCommentBox() {
+                const target = document.querySelector('.comments-comment-texteditor');
+                if (!target) {
+                    console.warn('Comment texteditor not found');
+                    return;
+                }
+
+                // Create container
+                const container = document.createElement('div');
+                container.className = 'li-border-container';
+
+                // Create glow layer only
+                const glowLayer = document.createElement('div');
+                glowLayer.className = 'li-border-glow';
+
+                // Wrap target and add glow
+                target.parentNode.insertBefore(container, target);
+                container.appendChild(glowLayer);
+                container.appendChild(target);
+
+                // Trigger border color animation
+                target.classList.add('li-border-active');
+
+                // Inject CSS
+                const style = document.createElement('style');
+                style.textContent = `
+                    /* Container */
+                    .li-border-container {
+                    position: relative;
+                    width: 100%;
+                    }
+
+                    .li-border-container .li-border-animated {
+                    display: none;
+                    }
+
+                    /* Glow layer - fades out after 2 cycles */
+                    .li-border-glow {
+                    position: absolute;
+                    inset: -12px; /* Extend beyond border for glow effect */
+                    border-radius: 8px;
+                    overflow: hidden;
+                    filter: blur(20px);
+                    z-index: 0;
+                    pointer-events: none;
+                    animation: li-glow-fadeout 1s ease-out forwards; /* Fade out over 1s */
+                    }
+
+                    .li-border-glow:before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%) rotate(0deg);
+                    width: 200%;
+                    height: 200%;
+                    background: conic-gradient(
+                        transparent,
+                        #d4ff00,
+                        transparent 25%
+                    );
+                    animation: li-border-rotate 0.9s linear 1;
+                    }
+
+                    /* Animate border color on texteditor */
+                    .comments-comment-texteditor {
+                    transition: border-color 1s ease;
+                    }
+
+                    .comments-comment-texteditor.li-border-active {
+                    border-color: #d4ff00 !important;
+                    animation: li-border-color-pulse 1s ease forwards;
+                    }
+
+                    /* Content stays on top */
+                    .li-border-container > .comments-comment-texteditor {
+                    position: relative;
+                    z-index: 2;
+                    }
+
+                    /* Rotation animation */
+                    @keyframes li-border-rotate {
+                    100% {
+                        transform: translate(-50%, -50%) rotate(360deg);
+                    }
+                    }
+
+                    /* Glow fade out */
+                    @keyframes li-glow-fadeout {
+                    0% { opacity: 1; }
+                    80% { opacity: 1; } /* Stay visible during rotation */
+                    100% { opacity: 0; } /* Fade out at end */
+                    }
+
+                    /* Border color pulse */
+                    @keyframes li-border-color-pulse {
+                    0% { border-color: var(--color-border-low-emphasis); }
+                    50% { border-color: #d4ff00; }
+                    100% { border-color: var(--color-border-low-emphasis); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+
             function waitForCommentBox() {
                 return new Promise((resolve) => {
                     const check = setInterval(() => {
@@ -705,6 +809,7 @@
                     commentBox.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 commentBox.focus();
+                highlightCommentBox();
                 console.log('[LinkedIn AI] Injected draft:', text.substring(0, 50) + '...');
             }
 
