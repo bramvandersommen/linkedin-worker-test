@@ -511,15 +511,37 @@
     };
     
     function displayResults(posts) {
-      const container = document.getElementById('resultsContainer');
-      container.innerHTML = '<div class="results-grid"></div>';
+      resultsContainer.innerHTML = '';
       
-      const grid = container.querySelector('.results-grid');
+      if (posts.length === 0) {
+        resultsContainer.innerHTML = '<div class="no-results">No posts found</div>';
+        return;
+      }
+      
       posts.forEach((post, index) => {
-        grid.appendChild(createResultCard(post, index));
+        const card = createResultCard(post, index);
+        resultsContainer.appendChild(card);
       });
       
-      updateStats(0, processedTotal, posts.length * 3);
+      // Attach CTA click handlers
+      document.querySelectorAll('.cta-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const card = btn.closest('.result-card');
+          const postUrl = btn.getAttribute('href');
+          const activeDraftIndex = Array.from(card.querySelectorAll('.draft-tab')).findIndex(tab => tab.classList.contains('active'));
+          const drafts = Array.from(card.querySelectorAll('.draft-content')).map(el => el.textContent.trim());
+          
+          const params = new URLSearchParams({
+            selected: (activeDraftIndex + 1).toString(),
+            draft1: JSON.stringify(drafts[0]),
+            draft2: JSON.stringify(drafts[1]),
+            draft3: JSON.stringify(drafts[2])
+          });
+          
+          window.open(postUrl + '#' + params.toString(), '_blank');
+        });
+      });
     }
     
     // Message handler
