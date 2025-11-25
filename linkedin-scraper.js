@@ -621,30 +621,41 @@
     // ═════════════════════════════════════════════════════════════════════════════
 
     if (PAGE_TYPE === 'POST') {
+        // Wait for DOM to be fully ready
+        if (document.readyState !== 'complete') {
+            window.addEventListener('load', initPostPage);
+        } else {
+            initPostPage();
+        }
 
-        let currentDraftIndex = 0;
-        let drafts = [];
-        let postData = {};
+        function initPostPage() {
+            let currentDraftIndex = 0;
+            let drafts = [];
+            let postData = {};
 
-        function parseDraftsFromURL() {
+            function parseDraftsFromURL() {
             // Try hash params first (new system)
             const hash = window.location.hash.slice(1);
             if (hash) {
-                const params = new URLSearchParams(hash);
-                const selected = parseInt(params.get('selected')) || 1;
-                drafts = [
-                    JSON.parse(params.get('draft1') || '""'),
-                    JSON.parse(params.get('draft2') || '""'),
-                    JSON.parse(params.get('draft3') || '""')
-                ].filter(Boolean);
-                
-                if (drafts.length > 0) {
-                    currentDraftIndex = selected - 1;
-                    postData.postID = Utils.extractPostID(window.location.href);
-                    return drafts;
+                try {
+                    const params = new URLSearchParams(hash);
+                    const selected = parseInt(params.get('selected')) || 1;
+                    drafts = [
+                        params.get('draft1') ? JSON.parse(decodeURIComponent(params.get('draft1'))) : '',
+                        params.get('draft2') ? JSON.parse(decodeURIComponent(params.get('draft2'))) : '',
+                        params.get('draft3') ? JSON.parse(decodeURIComponent(params.get('draft3'))) : ''
+                    ].filter(Boolean);
+
+                    if (drafts.length > 0) {
+                        currentDraftIndex = selected - 1;
+                        postData.postID = Utils.extractPostID(window.location.href);
+                        return drafts;
+                    }
+                } catch (e) {
+                    console.error('[LinkedIn AI] Hash parse error:', e);
                 }
             }
-            
+
             // Fallback to query params (old system)
             const params = new URLSearchParams(window.location.search);
             const draft1 = params.get('draft1');
@@ -663,138 +674,153 @@
             return drafts;
         }
 
-        function waitForCommentBox() {
-            return new Promise((resolve) => {
-                const check = setInterval(() => {
-                    const commentBox = document.querySelector('.ql-editor[contenteditable="true"]') ||
-                        document.querySelector('div[role="textbox"][contenteditable="true"]');
+            function waitForCommentBox() {
+                return new Promise((resolve) => {
+                    const check = setInterval(() => {
+                        const commentBox = document.querySelector('.ql-editor[contenteditable="true"]') ||
+                            document.querySelector('div[role="textbox"][contenteditable="true"]');
 
-                    if (commentBox) {
+                        if (commentBox) {
+                            clearInterval(check);
+                            resolve(commentBox);
+                        }
+                    }, 100);
+
+                    setTimeout(() => {
                         clearInterval(check);
-                        resolve(commentBox);
-                    }
-                }, 100);
-
-                setTimeout(() => {
-                    clearInterval(check);
-                    resolve(null);
-                }, 5000);
-            });
-        }
-
-        function injectDraft(commentBox, text) {
-            // Convert \n to <br> for contenteditable
-            const htmlContent = text.split('\n').map(line => line || '<br>').join('<br>');
-            
-            if (commentBox.getAttribute('contenteditable') === 'true') {
-                commentBox.innerHTML = htmlContent;
-                commentBox.dispatchEvent(new Event('input', { bubbles: true }));
-            } else {
-                commentBox.value = text;
-                commentBox.dispatchEvent(new Event('input', { bubbles: true }));
+                        resolve(null);
+                    }, 5000);
+                });
             }
-            commentBox.focus();
-            console.log('[LinkedIn AI] Injected draft:', text.substring(0, 50) + '...');
-        }
 
-        function createCycleButton(commentBox) {
-            if (drafts.length === 1) return;
+            function injectDraft(commentBox, text) {
+                // Convert \n to <br> for contenteditable
+                const htmlContent = text.split('\n').map(line => line || '<br>').join('<br>');
 
-            const btn = document.createElement('button');
-            btn.innerHTML = `🔄 Draft ${currentDraftIndex + 1}/${drafts.length}`;
-            btn.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;background:linear-gradient(135deg, #d4ff00 -20%, #97b500 120%);color:#1a1a1a;border:none;border-radius:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(215,255,86,0.4);transition:all 0.2s;';
-
-            btn.onmouseover = () => {
-                btn.style.transform = 'translateY(-2px)';
-                btn.style.boxShadow = '0 6px 16px rgba(215,255,86,0.5)';
-            };
-
-            btn.onmouseout = () => {
-                btn.style.transform = 'translateY(0)';
-                btn.style.boxShadow = '0 4px 12px rgba(215,255,86,0.4)';
-            };
-
-            btn.onclick = () => {
-                currentDraftIndex = (currentDraftIndex + 1) % drafts.length;
-                injectDraft(commentBox, drafts[currentDraftIndex]);
-                btn.innerHTML = `🔄 Draft ${currentDraftIndex + 1}/${drafts.length}`;
-                btn.style.transform = 'scale(1.1)';
-                setTimeout(() => btn.style.transform = 'scale(1)', 150);
-            };
-
-            document.body.appendChild(btn);
-        }
-
-        function watchForPostSubmit(commentBox) {
-            const observer = new MutationObserver(() => {
-                const postButton = document.querySelector('button[type="submit"]');
-                if (postButton && !postButton.hasAttribute('data-tracked')) {
-                    postButton.setAttribute('data-tracked', 'true');
-                    postButton.addEventListener('click', () => {
-                        setTimeout(() => {
-                            const finalComment = commentBox.textContent || commentBox.value;
-                            const originalDraft = drafts[currentDraftIndex];
-                            const manualEdits = finalComment.trim() !== originalDraft.trim();
-
-                            Utils.trackComment({
-                                postID: postData.postID,
-                                vipName: postData.vipName,
-                                draftIndex: currentDraftIndex + 1,
-                                finalComment,
-                                originalDraft,
-                                manualEdits
-                            });
-                        }, 500);
-                    });
+                if (commentBox.getAttribute('contenteditable') === 'true') {
+                    commentBox.innerHTML = htmlContent;
+                    commentBox.dispatchEvent(new Event('input', { bubbles: true }));
+                } else {
+                    commentBox.value = text;
+                    commentBox.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-            });
+                commentBox.focus();
+                console.log('[LinkedIn AI] Injected draft:', text.substring(0, 50) + '...');
+            }
 
-            observer.observe(document.body, { childList: true, subtree: true });
+            function createCycleButton(commentBox) {
+                if (drafts.length === 1) return;
+
+                const btn = document.createElement('button');
+                btn.innerHTML = `🔄 Draft ${currentDraftIndex + 1}/${drafts.length}`;
+                btn.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;background:linear-gradient(135deg, #d4ff00 -20%, #97b500 120%);color:#1a1a1a;border:none;border-radius:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(215,255,86,0.4);transition:all 0.2s;';
+
+                btn.onmouseover = () => {
+                    btn.style.transform = 'translateY(-2px)';
+                    btn.style.boxShadow = '0 6px 16px rgba(215,255,86,0.5)';
+                };
+
+                btn.onmouseout = () => {
+                    btn.style.transform = 'translateY(0)';
+                    btn.style.boxShadow = '0 4px 12px rgba(215,255,86,0.4)';
+                };
+
+                btn.onclick = () => {
+                    currentDraftIndex = (currentDraftIndex + 1) % drafts.length;
+                    injectDraft(commentBox, drafts[currentDraftIndex]);
+                    btn.innerHTML = `🔄 Draft ${currentDraftIndex + 1}/${drafts.length}`;
+                    btn.style.transform = 'scale(1.1)';
+                    setTimeout(() => btn.style.transform = 'scale(1)', 150);
+                };
+
+                document.body.appendChild(btn);
+            }
+
+            function watchForPostSubmit(commentBox) {
+                const observer = new MutationObserver(() => {
+                    const postButton = document.querySelector('button[type="submit"]');
+                    if (postButton && !postButton.hasAttribute('data-tracked')) {
+                        postButton.setAttribute('data-tracked', 'true');
+                        postButton.addEventListener('click', () => {
+                            setTimeout(() => {
+                                const finalComment = commentBox.textContent || commentBox.value;
+                                const originalDraft = drafts[currentDraftIndex];
+                                const manualEdits = finalComment.trim() !== originalDraft.trim();
+
+                                Utils.trackComment({
+                                    postID: postData.postID,
+                                    vipName: postData.vipName,
+                                    draftIndex: currentDraftIndex + 1,
+                                    finalComment,
+                                    originalDraft,
+                                    manualEdits
+                                });
+                            }, 500);
+                        });
+                    }
+                });
+
+                observer.observe(document.body, { childList: true, subtree: true });
+            }
+
+            // Auto-click "Show more" button
+            setTimeout(() => {
+                const btn = document.querySelector('.feed-shared-inline-show-more-text__see-more-less-toggle, button[aria-label*="see more"]');
+                if (btn) {
+                    btn.click();
+                    console.log('[LinkedIn AI] Clicked "Show more"');
+                }
+            }, 500);
+
+            // Initialize injection
+            (async () => {
+                const parsedDrafts = parseDraftsFromURL();
+                if (!parsedDrafts) {
+                    console.log('[LinkedIn AI] No drafts in URL');
+                    return;
+                }
+
+                console.log('[LinkedIn AI] Found', drafts.length, 'AI drafts');
+
+                // Auto-click "Show more" FIRST and wait
+                await new Promise(resolve => {
+                    setTimeout(() => {
+                        const btn = document.querySelector('.feed-shared-inline-show-more-text__see-more-less-toggle, button[aria-label*="see more"]');
+                        if (btn) {
+                            btn.click();
+                            console.log('[LinkedIn AI] Clicked "Show more"');
+                            setTimeout(resolve, 800); // Wait for expansion
+                        } else {
+                            resolve();
+                        }
+                    }, 1000);
+                });
+
+                const commentBox = await waitForCommentBox();
+                if (!commentBox) {
+                    console.warn('[LinkedIn AI] Comment box not found');
+                    return;
+                }
+
+                injectDraft(commentBox, drafts[currentDraftIndex]);
+                createCycleButton(commentBox);
+                watchForPostSubmit(commentBox);
+
+                const notification = document.createElement('div');
+                notification.innerHTML = '✅ AI draft loaded';
+                notification.style.cssText = 'position:fixed;top:24px;right:24px;z-index:99999;padding:12px 20px;background:#28a745;color:white;border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);animation:slideIn 0.3s ease-out;';
+
+                if (!document.getElementById('notif-slide-anim')) {
+                    const style = document.createElement('style');
+                    style.id = 'notif-slide-anim';
+                    style.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
+                    document.head.appendChild(style);
+                }
+
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 3000);
+            })();
         }
-
-        // Auto-click "Show more" button
-        setTimeout(() => {
-            const btn = document.querySelector('.feed-shared-inline-show-more-text__see-more-less-toggle, button[aria-label*="see more"]');
-            if (btn) {
-                btn.click();
-                console.log('[LinkedIn AI] Clicked "Show more"');
-            }
-        }, 500);
-
-        // Initialize injection
-        (async () => {
-            const parsedDrafts = parseDraftsFromURL();
-            if (!parsedDrafts) {
-                console.log('[LinkedIn AI] No drafts in URL');
-                return;
-            }
-
-            console.log('[LinkedIn AI] Found', drafts.length, 'AI drafts');
-
-            const commentBox = await waitForCommentBox();
-            if (!commentBox) {
-                console.warn('[LinkedIn AI] Comment box not found');
-                return;
-            }
-
-            injectDraft(commentBox, drafts[currentDraftIndex]);
-            createCycleButton(commentBox);
-            watchForPostSubmit(commentBox);
-
-            const notification = document.createElement('div');
-            notification.innerHTML = '✅ AI draft loaded';
-            notification.style.cssText = 'position:fixed;top:24px;right:24px;z-index:99999;padding:12px 20px;background:#28a745;color:white;border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);animation:slideIn 0.3s ease-out;';
-
-            if (!document.getElementById('notif-slide-anim')) {
-                const style = document.createElement('style');
-                style.id = 'notif-slide-anim';
-                style.textContent = '@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
-                document.head.appendChild(style);
-            }
-
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
-        })();
     }
 
     // ═════════════════════════════════════════════════════════════════════════════
