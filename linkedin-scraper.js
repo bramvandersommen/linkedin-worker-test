@@ -575,16 +575,14 @@
                 });
 
                 const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
-                const serializablePosts = result.matches.map(({ cardElement, ...post }) => ({
-                    ...post,
-                    postUrl: post.postUrl || post.postID // Ensure postUrl is included
-                }));
+                const serializablePosts = result.matches.map(({ cardElement, ...post }) => post);
                 workerWindow.postMessage({
                     type: 'VIP_QUEUE',
                     posts: serializablePosts,
                     timestamp: Date.now()
                 }, workerOrigin);
                 console.log('[LinkedIn AI] Sent VIP_QUEUE with', serializablePosts.length, 'posts');
+                console.log(serializablePosts);
 
                 updateStatus('✅ Posts sent to worker!');
 
