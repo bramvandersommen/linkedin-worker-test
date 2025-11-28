@@ -168,6 +168,43 @@
       letter-spacing: 0.08em;
       margin-top: 0.625rem;
     }
+
+    /* Progress Bar */
+    .progress-container {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 10px;
+      display: none;
+    }
+
+    .progress-container.active {
+      display: block;
+    }
+
+    .progress-label {
+      font-size: 0.875rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted-foreground);
+      margin-bottom: 0.75rem;
+      text-align: center;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #D7FF56, #97b500);
+      border-radius: 4px;
+      transition: width 0.3s ease-out;
+      width: 0%;
+    }
     
     /* Results Grid */
     .results-grid {
@@ -234,6 +271,33 @@
       background: rgba(255, 255, 255, 0.02);
       border-left: 2px solid var(--accent);
       border-radius: 0 10px 10px 0;
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+      position: relative;
+    }
+
+    .result-content.collapsed::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(transparent, var(--card-bg));
+      pointer-events: none;
+    }
+
+    .result-content:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .expand-hint {
+      font-size: 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--accent);
+      margin-top: 0.5rem;
+      text-align: center;
+      opacity: 0.7;
     }
     
     /* Draft Tabs */
@@ -411,7 +475,7 @@
       <div class="stats">
         <div class="stat">
           <div class="stat-value" id="queueCount">0</div>
-          <div class="stat-label">Processing</div>
+          <div class="stat-label">In Queue</div>
         </div>
         <div class="stat">
           <div class="stat-value" id="processedCount">0</div>
@@ -420,6 +484,14 @@
         <div class="stat">
           <div class="stat-value" id="draftsCount">0</div>
           <div class="stat-label">Drafts Ready</div>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container" id="progressContainer">
+        <div class="progress-label" id="progressLabel">Processing batch 1 of 3...</div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
         </div>
       </div>
     </section>
@@ -435,12 +507,15 @@
   </div>
 
   <script>
-    console.log('Latest Code - Fr 28Nov');
-    const N8N_WEBHOOK = 'https://jsonplaceholder.typicode.com/posts';
+    console.log('[Worker] Version 3.1 - Batch Processing + ENRICHED_URL');
+    
+    const N8N_WEBHOOK = 'https://primary-production-83b6.up.railway.app/webhook-test/linkedin-ai-comments';
     const ALLOWED_ORIGINS = ['https://www.linkedin.com', 'https://linkedin.com'];
+    const BATCH_SIZE = 5;
     
     let processedTotal = 0;
     let linkedInConnected = false;
+    let allEnrichedPosts = [];
     
     function updateStatus(text, isProcessing = false) {
       const statusText = document.getElementById('statusText');
@@ -456,6 +531,20 @@
       document.getElementById('processedCount').textContent = processed;
       document.getElementById('draftsCount').textContent = drafts;
     }
+
+    function updateProgress(current, total, percentage) {
+      const container = document.getElementById('progressContainer');
+      const label = document.getElementById('progressLabel');
+      const fill = document.getElementById('progressFill');
+
+      if (total > 0) {
+        container.classList.add('active');
+        label.textContent = `Processing batch ${current} of ${total}...`;
+        fill.style.width = `${percentage}%`;
+      } else {
+        container.classList.remove('active');
+      }
+    }
     
     function updateConnectionStatus(connected) {
       linkedInConnected = connected;
@@ -468,15 +557,19 @@
       card.className = 'result-card';
       card.style.animationDelay = `${index * 0.1}s`;
       
-      const contentPreview = post.postContent.substring(0, 150) + (post.postContent.length > 150 ? '...' : '');
+      const contentPreview = post.POST_CONTENTS.substring(0, 150);
+      const isLongContent = post.POST_CONTENTS.length > 150;
       
       card.innerHTML = `
         <div class="result-header">
-          <h2 class="result-vip">${post.nameOfVIP}</h2>
-          <div class="result-meta">Post ID: ${post.postID}</div>
+          <h2 class="result-vip">${post.VIP_NAME}</h2>
+          <div class="result-meta">Post ID: ${post.POST_ID}</div>
         </div>
         
-        <blockquote class="result-content">${contentPreview}</blockquote>
+        <blockquote class="result-content ${isLongContent ? 'collapsed' : ''}" data-full-content="${post.POST_CONTENTS.replace(/"/g, '&quot;')}" data-expanded="false">
+          ${isLongContent ? contentPreview + '...' : post.POST_CONTENTS}
+        </blockquote>
+        ${isLongContent ? '<div class="expand-hint">Click to expand ↓</div>' : ''}
         
         <div class="draft-tabs">
           <button class="draft-tab active" onclick="switchDraft(this, 0)">Draft 1</button>
@@ -484,17 +577,40 @@
           <button class="draft-tab" onclick="switchDraft(this, 2)">Draft 3</button>
         </div>
         
-        <div class="draft-content active">${post.drafts[0]}</div>
-        <div class="draft-content">${post.drafts[1]}</div>
-        <div class="draft-content">${post.drafts[2]}</div>
+        <div class="draft-content active">${post.DRAFT_1}</div>
+        <div class="draft-content">${post.DRAFT_2}</div>
+        <div class="draft-content">${post.DRAFT_3}</div>
         
-        <a href="${post.urlToPost}" class="cta-button" target="_blank">
+        <a href="${post.ENRICHED_URL}" class="cta-button" target="_blank">
           💬 Comment on LinkedIn
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 3L11 8L6 13"/>
           </svg>
         </a>
       `;
+      
+      // Add expand/collapse functionality
+      if (isLongContent) {
+        const contentBlock = card.querySelector('.result-content');
+        const hint = card.querySelector('.expand-hint');
+        
+        contentBlock.addEventListener('click', () => {
+          const isExpanded = contentBlock.dataset.expanded === 'true';
+          const fullContent = contentBlock.dataset.fullContent;
+          
+          if (isExpanded) {
+            contentBlock.textContent = fullContent.substring(0, 150) + '...';
+            contentBlock.classList.add('collapsed');
+            contentBlock.dataset.expanded = 'false';
+            hint.textContent = 'Click to expand ↓';
+          } else {
+            contentBlock.textContent = fullContent;
+            contentBlock.classList.remove('collapsed');
+            contentBlock.dataset.expanded = 'true';
+            hint.textContent = 'Click to collapse ↑';
+          }
+        });
+      }
       
       return card;
     }
@@ -512,37 +628,105 @@
     };
     
     function displayResults(posts) {
-      resultsContainer.innerHTML = '';
+      const resultsContainer = document.getElementById('resultsContainer');
       
-      if (posts.length === 0) {
-        resultsContainer.innerHTML = '<div class="no-results">No posts found</div>';
-        return;
+      // Clear empty state on first result
+      if (allEnrichedPosts.length === 0) {
+        resultsContainer.innerHTML = '';
       }
       
+      if (posts.length === 0) return;
+      
+      // Add new posts to display
       posts.forEach((post, index) => {
-        const card = createResultCard(post, index);
+        const globalIndex = allEnrichedPosts.length + index;
+        const card = createResultCard(post, globalIndex);
         resultsContainer.appendChild(card);
       });
+
+      // Add to global collection
+      allEnrichedPosts.push(...posts);
+    }
+
+    async function processBatch(posts, batchIndex, totalBatches) {
+      updateProgress(batchIndex, totalBatches, ((batchIndex - 1) / totalBatches) * 100);
       
-      // Attach CTA click handlers
-      document.querySelectorAll('.cta-button').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const card = btn.closest('.result-card');
-          const postUrl = btn.getAttribute('href');
-          const activeDraftIndex = Array.from(card.querySelectorAll('.draft-tab')).findIndex(tab => tab.classList.contains('active'));
-          const drafts = Array.from(card.querySelectorAll('.draft-content')).map(el => el.textContent.trim());
-          
-          const params = new URLSearchParams({
-            selected: (activeDraftIndex + 1).toString(),
-            draft1: JSON.stringify(drafts[0]),
-            draft2: JSON.stringify(drafts[1]),
-            draft3: JSON.stringify(drafts[2])
-          });
-          
-          window.open(postUrl + '#' + params.toString(), '_blank');
-        });
+      const response = await fetch(N8N_WEBHOOK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ posts })
       });
+      
+      if (!response.ok) {
+        throw new Error(`N8N returned ${response.status}`);
+      }
+      
+      const enrichedPosts = await response.json();
+      
+      // Display results incrementally
+      displayResults(enrichedPosts);
+      
+      // Update stats
+      processedTotal += posts.length;
+      updateStats(0, processedTotal, allEnrichedPosts.length);
+      updateProgress(batchIndex, totalBatches, (batchIndex / totalBatches) * 100);
+      
+      return enrichedPosts;
+    }
+
+    async function processAllPosts(posts, eventSource, eventOrigin) {
+      const totalPosts = posts.length;
+      const batches = [];
+      
+      // Split into batches
+      for (let i = 0; i < totalPosts; i += BATCH_SIZE) {
+        batches.push(posts.slice(i, i + BATCH_SIZE));
+      }
+      
+      const totalBatches = batches.length;
+      updateStatus(`Processing ${totalPosts} posts in ${totalBatches} batch${totalBatches > 1 ? 'es' : ''}...`, true);
+      updateStats(totalPosts, processedTotal, allEnrichedPosts.length);
+      
+      try {
+        // Process batches sequentially
+        for (let i = 0; i < batches.length; i++) {
+          const batch = batches[i];
+          const batchNum = i + 1;
+          
+          console.log(`[Worker] Processing batch ${batchNum}/${totalBatches} (${batch.length} posts)`);
+          
+          await processBatch(batch, batchNum, totalBatches);
+          
+          // Small delay between batches for UX
+          if (i < batches.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+        
+        // All done
+        updateProgress(0, 0, 0);
+        updateStatus(`✅ All ${totalPosts} drafts ready!`);
+        
+        // Notify scraper
+        if (eventSource) {
+          eventSource.postMessage({
+            type: 'AI_RESPONSES',
+            posts: allEnrichedPosts,
+            timestamp: Date.now()
+          }, eventOrigin);
+        }
+        
+      } catch (error) {
+        updateProgress(0, 0, 0);
+        updateStatus(`❌ Error: ${error.message}`);
+        
+        if (eventSource) {
+          eventSource.postMessage({
+            type: 'ERROR',
+            message: error.message
+          }, eventOrigin);
+        }
+      }
     }
     
     // Message handler
@@ -563,75 +747,24 @@
       
       if (event.data.type === 'VIP_QUEUE') {
         const posts = event.data.posts;
-        const postCount = posts.length;
         
-        updateStatus(`Processing ${postCount} posts...`, true);
-        updateStats(postCount, processedTotal, 0);
+        // Reset for new session
+        allEnrichedPosts = [];
+        processedTotal = 0;
         
-        try {
-          event.source.postMessage({
-            type: 'PROCESSING_STATUS',
-            message: `Processing ${postCount} posts...`
-          }, event.origin);
-          
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          const response = await fetch(N8N_WEBHOOK, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ posts })
-          });
-          
-          if (!response.ok) throw new Error(`N8N returned ${response.status}`);
-          
-          const enriched = posts.map((post) => {
-            const drafts = [
-              `Great insights, ${post.nameOfVIP}! This really resonates with my experience. Would love to hear more about your approach.`,
-              `${post.nameOfVIP}, this is spot on. I've seen similar patterns in my work. How are you measuring success with this?`,
-              `Love this perspective! ${post.nameOfVIP}, have you considered applying this to related challenges? Would be interesting to explore.`
-            ];
-            
-            const baseUrl = post.urlToPost;
-            const params = new URLSearchParams({
-              draft1: drafts[0],
-              draft2: drafts[1],
-              draft3: drafts[2]
-            });
-            
-            return {
-              ...post,
-              drafts: drafts,
-              postUrl: `${baseUrl}?${params.toString()}`  // CHANGE commentUrl to postUrl
-            };
-          });
-          
-          displayResults(enriched);
-          
-          event.source.postMessage({
-            type: 'AI_RESPONSES',
-            posts: enriched,
-            timestamp: Date.now()
-          }, event.origin);
-          
-          processedTotal += postCount;
-          updateStatus('✅ All drafts ready!');
-          
-        } catch (error) {
-          updateStatus(`❌ Error: ${error.message}`);
-          event.source.postMessage({
-            type: 'ERROR',
-            message: error.message
-          }, event.origin);
-        }
+        event.source.postMessage({
+          type: 'PROCESSING_STATUS',
+          message: `Processing ${posts.length} posts...`
+        }, event.origin);
+        
+        await processAllPosts(posts, event.source, event.origin);
       }
     });
     
     updateStatus('Ready - Listening for posts...');
 
     // Send WORKER_READY proactively on load to opener window
-    // This ensures the scraper knows we're ready even before PING arrives
     if (window.opener) {
-      // Try both possible LinkedIn origins
       ALLOWED_ORIGINS.forEach(origin => {
         try {
           window.opener.postMessage({ type: 'WORKER_READY' }, origin);
