@@ -209,7 +209,7 @@
     /* Results Grid */
     .results-grid {
       display: grid;
-      gap: 2rem;
+      gap: 3rem;
     }
     
     .result-card {
@@ -221,6 +221,7 @@
       opacity: 0;
       animation: slideUp 0.5s ease-out forwards;
       transition: all 0.2s ease-out;
+      cursor: pointer;
     }
     
     .result-card:hover {
@@ -271,7 +272,6 @@
       background: rgba(255, 255, 255, 0.02);
       border-left: 2px solid var(--accent);
       border-radius: 0 10px 10px 0;
-      cursor: pointer;
       transition: all 0.2s ease-out;
       position: relative;
     }
@@ -350,14 +350,19 @@
       display: block;
     }
     
-    /* CTA Button */
-    .cta-button {
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .cta-button, .archive-button {
       display: inline-flex;
       align-items: center;
       gap: 0.625rem;
       padding: 0.875rem 1.375rem;
-      background: var(--accent);
-      color: var(--accent-fg);
       text-decoration: none;
       border-radius: 12px;
       font-family: 'Outfit', sans-serif;
@@ -366,7 +371,12 @@
       transition: all 0.18s ease-out;
       border: none;
       cursor: pointer;
-      margin-top: 1.5rem;
+    }
+
+    .cta-button {
+      background: var(--accent);
+      color: var(--accent-fg);
+      flex: 1;
     }
     
     .cta-button:hover {
@@ -377,6 +387,29 @@
     
     .cta-button:active {
       transform: translateY(0) scale(1);
+    }
+
+    .archive-button {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted-foreground);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .archive-button:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--foreground);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .archive-button.archived {
+      background: rgba(215, 255, 86, 0.1);
+      color: var(--accent);
+      border-color: rgba(215, 255, 86, 0.3);
+      cursor: not-allowed;
+    }
+
+    .archive-button.archived:hover {
+      transform: none;
     }
     
     /* Empty State */
@@ -448,6 +481,14 @@
       .draft-tabs {
         gap: 0.875rem;
       }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .cta-button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -497,7 +538,7 @@
     </section>
     
     <!-- Results -->
-    <main id="resultsContainer">
+    <main id="resultsContainer" class="results-grid">
       <div class="empty-state">
         <div class="empty-state-icon">💬</div>
         <div class="empty-state-text">Waiting for VIP posts...</div>
@@ -507,15 +548,25 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 3.1 - Batch Processing + ENRICHED_URL');
+    console.log('[Worker] Version 3.2 - Dedupe + Fake Progress + Archive');
     
-    const N8N_WEBHOOK = 'https://webhook-processor-production-84a9.up.railway.app/webhook/linkedin-ai-comments';
+    const N8N_WEBHOOK = 'https://primary-production-83b6.up.railway.app/webhook-test/linkedin-ai-comments';
+    const N8N_ARCHIVE = 'https://primary-production-83b6.up.railway.app/webhook/archive-post';
     const ALLOWED_ORIGINS = ['https://www.linkedin.com', 'https://linkedin.com'];
     const BATCH_SIZE = 5;
     
     let processedTotal = 0;
     let linkedInConnected = false;
     let allEnrichedPosts = [];
+    const seenPostIds = new Set();
+    
+    // Fake progress steps inspired by N8N workflow
+    const FAKE_STEPS = [
+      { label: '📋 Fetching VIP data...', duration: 800 },
+      { label: '🧠 Loading AI model...', duration: 1200 },
+      { label: '✍️ Analyzing tone...', duration: 1000 },
+      { label: '⚡ Generating drafts...', duration: 3000 }
+    ];
     
     function updateStatus(text, isProcessing = false) {
       const statusText = document.getElementById('statusText');
@@ -551,11 +602,36 @@
       const badge = document.getElementById('connectionStatus');
       badge.textContent = connected ? 'Connected' : 'Disconnected';
     }
+
+    async function archivePost(postId, button) {
+      button.disabled = true;
+      button.textContent = '📦 Archiving...';
+      
+      try {
+        const response = await fetch(N8N_ARCHIVE, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId })
+        });
+        
+        if (!response.ok) throw new Error('Archive failed');
+        
+        button.textContent = '✅ Archived';
+        button.classList.add('archived');
+        console.log('[Worker] Archived post:', postId);
+        
+      } catch (error) {
+        button.textContent = '❌ Failed';
+        button.disabled = false;
+        console.error('[Worker] Archive error:', error);
+      }
+    }
     
     function createResultCard(post, index) {
       const card = document.createElement('article');
       card.className = 'result-card';
       card.style.animationDelay = `${index * 0.1}s`;
+      card.dataset.postId = post.POST_ID;
       
       const contentPreview = post.POST_CONTENTS.substring(0, 150);
       const isLongContent = post.POST_CONTENTS.length > 150;
@@ -569,7 +645,7 @@
         <blockquote class="result-content ${isLongContent ? 'collapsed' : ''}" data-full-content="${post.POST_CONTENTS.replace(/"/g, '&quot;')}" data-expanded="false">
           ${isLongContent ? contentPreview + '...' : post.POST_CONTENTS}
         </blockquote>
-        ${isLongContent ? '<div class="expand-hint">Click to expand ↓</div>' : ''}
+        ${isLongContent ? '<div class="expand-hint">Click anywhere on the card to expand ↓</div>' : ''}
         
         <div class="draft-tabs">
           <button class="draft-tab active" onclick="switchDraft(this, 0)">Draft 1</button>
@@ -581,20 +657,30 @@
         <div class="draft-content">${post.DRAFT_2}</div>
         <div class="draft-content">${post.DRAFT_3}</div>
         
-        <a href="${post.ENRICHED_URL}" class="cta-button" target="_blank">
-          💬 Comment on LinkedIn
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 3L11 8L6 13"/>
-          </svg>
-        </a>
+        <div class="action-buttons">
+          <a href="${post.ENRICHED_URL}" class="cta-button" target="_blank">
+            💬 Comment on LinkedIn
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 3L11 8L6 13"/>
+            </svg>
+          </a>
+          <button class="archive-button" onclick="event.stopPropagation(); archivePost('${post.POST_ID}', this)">
+            📦 Archive
+          </button>
+        </div>
       `;
       
-      // Add expand/collapse functionality
+      // Click anywhere on card to expand (except buttons)
       if (isLongContent) {
         const contentBlock = card.querySelector('.result-content');
         const hint = card.querySelector('.expand-hint');
         
-        contentBlock.addEventListener('click', () => {
+        card.addEventListener('click', (e) => {
+          // Don't expand if clicking on tabs, buttons, or links
+          if (e.target.closest('.draft-tabs') || e.target.closest('.action-buttons')) {
+            return;
+          }
+          
           const isExpanded = contentBlock.dataset.expanded === 'true';
           const fullContent = contentBlock.dataset.fullContent;
           
@@ -602,12 +688,12 @@
             contentBlock.textContent = fullContent.substring(0, 150) + '...';
             contentBlock.classList.add('collapsed');
             contentBlock.dataset.expanded = 'false';
-            hint.textContent = 'Click to expand ↓';
+            hint.textContent = 'Click anywhere on the card to expand ↓';
           } else {
             contentBlock.textContent = fullContent;
             contentBlock.classList.remove('collapsed');
             contentBlock.dataset.expanded = 'true';
-            hint.textContent = 'Click to collapse ↑';
+            hint.textContent = 'Click anywhere on the card to collapse ↑';
           }
         });
       }
@@ -626,6 +712,8 @@
       button.classList.add('active');
       contents[index].classList.add('active');
     };
+
+    window.archivePost = archivePost;
     
     function displayResults(posts) {
       const resultsContainer = document.getElementById('resultsContainer');
@@ -637,25 +725,56 @@
       
       if (posts.length === 0) return;
       
+      // Filter out duplicates
+      const uniquePosts = posts.filter(post => {
+        if (seenPostIds.has(post.POST_ID)) {
+          console.log('[Worker] ⏭️ Skipping duplicate:', post.POST_ID);
+          return false;
+        }
+        seenPostIds.add(post.POST_ID);
+        return true;
+      });
+      
+      console.log(`[Worker] Displaying ${uniquePosts.length} unique posts (filtered ${posts.length - uniquePosts.length} duplicates)`);
+      
       // Add new posts to display
-      posts.forEach((post, index) => {
+      uniquePosts.forEach((post, index) => {
         const globalIndex = allEnrichedPosts.length + index;
         const card = createResultCard(post, globalIndex);
         resultsContainer.appendChild(card);
       });
 
       // Add to global collection
-      allEnrichedPosts.push(...posts);
+      allEnrichedPosts.push(...uniquePosts);
     }
 
-    async function processBatch(posts, batchIndex, totalBatches) {
-      updateProgress(batchIndex, totalBatches, ((batchIndex - 1) / totalBatches) * 100);
+    async function processBatchWithFakeProgress(posts, batchIndex, totalBatches) {
+      const baseProgress = ((batchIndex - 1) / totalBatches) * 100;
+      const progressPerStep = (100 / totalBatches) / FAKE_STEPS.length;
       
-      const response = await fetch(N8N_WEBHOOK, {
+      // Start the batch
+      updateProgress(batchIndex, totalBatches, baseProgress);
+      
+      // Kick off real API call
+      const apiPromise = fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ posts })
       });
+      
+      // Run fake progress steps
+      for (let i = 0; i < FAKE_STEPS.length; i++) {
+        const step = FAKE_STEPS[i];
+        updateStatus(step.label, true);
+        
+        const stepProgress = baseProgress + (progressPerStep * (i + 1));
+        updateProgress(batchIndex, totalBatches, stepProgress);
+        
+        await new Promise(resolve => setTimeout(resolve, step.duration));
+      }
+      
+      // Wait for API to complete
+      const response = await apiPromise;
       
       if (!response.ok) {
         throw new Error(`N8N returned ${response.status}`);
@@ -684,7 +803,7 @@
       }
       
       const totalBatches = batches.length;
-      updateStatus(`Processing ${totalPosts} posts in ${totalBatches} batch${totalBatches > 1 ? 'es' : ''}...`, true);
+      updateStatus(`Processing ${totalPosts} posts in ${totalBatches} batch${totalBatches > 1 ? 'es' : ''} (5 per batch)...`, true);
       updateStats(totalPosts, processedTotal, allEnrichedPosts.length);
       
       try {
@@ -695,7 +814,7 @@
           
           console.log(`[Worker] Processing batch ${batchNum}/${totalBatches} (${batch.length} posts)`);
           
-          await processBatch(batch, batchNum, totalBatches);
+          await processBatchWithFakeProgress(batch, batchNum, totalBatches);
           
           // Small delay between batches for UX
           if (i < batches.length - 1) {
@@ -705,7 +824,7 @@
         
         // All done
         updateProgress(0, 0, 0);
-        updateStatus(`✅ All ${totalPosts} drafts ready!`);
+        updateStatus(`✅ All ${allEnrichedPosts.length} drafts ready!`);
         
         // Notify scraper
         if (eventSource) {
@@ -750,6 +869,7 @@
         
         // Reset for new session
         allEnrichedPosts = [];
+        seenPostIds.clear();
         processedTotal = 0;
         
         event.source.postMessage({
