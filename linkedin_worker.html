@@ -7,6 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+  <link rel="manifest" href="img/site.webmanifest">
   <style>
     :root {
       --background: hsl(0, 0%, 10%);
@@ -497,7 +503,7 @@
     <!-- Header -->
     <header class="header">
       <div class="offhourslogo">
-        <img src="logo.png" alt="Offhours logo">
+        <img src="img/logo.png" alt="Offhours logo">
       </div>
       <h1 class="logo">LinkedIn AI Commenter</h1>
       <p class="subtitle">Worker retrieving recent VIP posts and generating personalized, human-like comments</p>
@@ -548,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 3.3 - Dedupe + Fake Progress + Archive');
+    console.log('[Worker] Version 3.3 - Dedupe + Progress Status + Archive Button');
     
     const N8N_WEBHOOK = 'https://webhook-processor-production-84a9.up.railway.app/webhook/linkedin-ai-comments';
     const N8N_ARCHIVE = 'https://primary-production-83b6.up.railway.app/webhook/archive-post';
