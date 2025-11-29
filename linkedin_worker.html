@@ -568,9 +568,9 @@
     
     // Fake progress steps inspired by N8N workflow
     const FAKE_STEPS = [
-      { label: '📋 Fetching VIP data...', duration: 1500 },
-      { label: '🧠 Loading AI model...', duration: 1500 },
-      { label: '✍️ Analyzing tone...', duration: 1000 },
+      { label: '📋 Fetching VIP data...', duration: 2000 },
+      { label: '🧠 Loading AI model...', duration: 2000 },
+      { label: '✍️ Analyzing tone...', duration: 2000 },
       { label: '⚡ Generating drafts...', duration: 3000 }
     ];
     
@@ -691,6 +691,7 @@
           
           const isExpanded = contentBlock.dataset.expanded === 'true';
           const fullContent = contentBlock.dataset.fullContent;
+          const formatLineBreaks = (text) => text.replace(/\n/g, '<br>');
           
           if (isExpanded) {
             contentBlock.innerHTML = formatLineBreaks(fullContent.substring(0, 150)) + '...';
