@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 3.3 - Dedupe + Progress Status + Archive Button');
+    console.log('[Worker] Version 3.4 - Line Break Formatting');
     
     const N8N_WEBHOOK = 'https://webhook-processor-production-84a9.up.railway.app/webhook/linkedin-ai-comments';
     const N8N_ARCHIVE = 'https://webhook-processor-production-84a9.up.railway.app/webhook/archive-post';
@@ -642,6 +642,9 @@
       const contentPreview = post.POST_CONTENTS.substring(0, 150);
       const isLongContent = post.POST_CONTENTS.length > 150;
       
+      // Helper to convert \n to <br>
+      const formatLineBreaks = (text) => text.replace(/\n/g, '<br>');
+      
       card.innerHTML = `
         <div class="result-header">
           <h2 class="result-vip">${post.VIP_NAME}</h2>
@@ -649,7 +652,7 @@
         </div>
         
         <blockquote class="result-content ${isLongContent ? 'collapsed' : ''}" data-full-content="${post.POST_CONTENTS.replace(/"/g, '&quot;')}" data-expanded="false">
-          ${isLongContent ? contentPreview + '...' : post.POST_CONTENTS}
+          ${isLongContent ? formatLineBreaks(contentPreview) + '...' : formatLineBreaks(post.POST_CONTENTS)}
         </blockquote>
         ${isLongContent ? '<div class="expand-hint">Click anywhere on the card to expand ↓</div>' : ''}
         
@@ -659,9 +662,9 @@
           <button class="draft-tab" onclick="switchDraft(this, 2)">Draft 3</button>
         </div>
         
-        <div class="draft-content active">${post.DRAFT_1}</div>
-        <div class="draft-content">${post.DRAFT_2}</div>
-        <div class="draft-content">${post.DRAFT_3}</div>
+        <div class="draft-content active">${formatLineBreaks(post.DRAFT_1)}</div>
+        <div class="draft-content">${formatLineBreaks(post.DRAFT_2)}</div>
+        <div class="draft-content">${formatLineBreaks(post.DRAFT_3)}</div>
         
         <div class="action-buttons">
           <a href="${post.ENRICHED_URL}" class="cta-button" target="_blank">
@@ -682,7 +685,6 @@
         const hint = card.querySelector('.expand-hint');
         
         card.addEventListener('click', (e) => {
-          // Don't expand if clicking on tabs, buttons, or links
           if (e.target.closest('.draft-tabs') || e.target.closest('.action-buttons')) {
             return;
           }
@@ -691,12 +693,12 @@
           const fullContent = contentBlock.dataset.fullContent;
           
           if (isExpanded) {
-            contentBlock.textContent = fullContent.substring(0, 150) + '...';
+            contentBlock.innerHTML = formatLineBreaks(fullContent.substring(0, 150)) + '...';
             contentBlock.classList.add('collapsed');
             contentBlock.dataset.expanded = 'false';
             hint.textContent = 'Click anywhere on the card to expand ↓';
           } else {
-            contentBlock.textContent = fullContent;
+            contentBlock.innerHTML = formatLineBreaks(fullContent);
             contentBlock.classList.remove('collapsed');
             contentBlock.dataset.expanded = 'true';
             hint.textContent = 'Click anywhere on the card to collapse ↑';
