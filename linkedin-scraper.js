@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter
 // @namespace    https://offhoursai.com/
-// @version      3.0
+// @version      3.1
 // @description  LinkedIn AI Post Commenter scraper with OffhoursAI branding.
 // @match        https://www.linkedin.com/notifications/*
 // @match        https://linkedin.com/notifications/*
@@ -205,7 +205,7 @@
                 }
             }
 
-            const bursts = 3;
+            const bursts = 2;
             const delay = 300;
 
             for (let b = 0; b < bursts; b++) {
@@ -421,7 +421,7 @@
                     btnFront.style.pointerEvents = 'auto';
                     container.style.pointerEvents = 'auto';
                     handleFABClick();
-                }, 1200);
+                }, 400);
             });
 
             container.appendChild(btnBack);
