@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter
 // @namespace    https://offhoursai.com/
-// @version      3.1
+// @version      3.0
 // @description  LinkedIn AI Post Commenter scraper with OffhoursAI branding.
 // @match        https://www.linkedin.com/notifications/*
 // @match        https://linkedin.com/notifications/*
@@ -421,7 +421,7 @@
                     btnFront.style.pointerEvents = 'auto';
                     container.style.pointerEvents = 'auto';
                     handleFABClick();
-                }, 400);
+                }, 100);
             });
 
             container.appendChild(btnBack);
@@ -490,7 +490,7 @@
                 updateStatus('📍 Scrolling to top...');
                 await new Promise(resolve => {
                     const startY = window.scrollY;
-                    const duration = 400;
+                    const duration = 300;
                     const startTime = performance.now();
 
                     function animate(now) {
@@ -796,47 +796,124 @@
             }
 
             function injectDraft(commentBox, text) {
-                // Convert \n to <br> for contenteditable
-                const htmlContent = text.split('\n').map(line => line || '<br>').join('<br>');
+                // Split by line breaks, filter empty lines, join with double <br>
+                const lines = text.split('\n').filter(line => line.trim());
+                const htmlContent = lines.join('<br><br>');
 
                 if (commentBox.getAttribute('contenteditable') === 'true') {
-                    commentBox.innerHTML = htmlContent;
+                    // Wrap in single paragraph
+                    commentBox.innerHTML = `<p>${htmlContent}</p>`;
                     commentBox.dispatchEvent(new Event('input', { bubbles: true }));
                 } else {
                     commentBox.value = text;
                     commentBox.dispatchEvent(new Event('input', { bubbles: true }));
                 }
+
                 commentBox.focus();
                 highlightCommentBox();
                 console.log('[LinkedIn AI] Injected draft:', text.substring(0, 50) + '...');
             }
 
             function createCycleButton(commentBox) {
-                if (drafts.length === 1) return;
+                if (drafts.length === 1) {
+                    console.log('[LinkedIn AI] Only 1 draft, skipping button');
+                    return;
+                }
 
-                const btn = document.createElement('button');
-                btn.innerHTML = `🔄 Draft ${currentDraftIndex + 1}/${drafts.length}`;
-                btn.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:99999;padding:12px 20px;background:linear-gradient(135deg, #d4ff00 -20%, #97b500 120%);color:#1a1a1a;border:none;border-radius:24px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:600;font-size:14px;cursor:pointer;box-shadow:0 4px 12px rgba(215,255,86,0.4);transition:all 0.2s;';
+                // Find comment texteditor container for positioning reference
+                const commentContainer = document.querySelector('.comments-comment-texteditor');
+                if (!commentContainer) {
+                    console.error('[LinkedIn AI] Comment container not found!');
+                    return;
+                }
 
-                btn.onmouseover = () => {
-                    btn.style.transform = 'translateY(-2px)';
-                    btn.style.boxShadow = '0 6px 16px rgba(215,255,86,0.5)';
-                };
+                console.log('[LinkedIn AI] Comment container found:', commentContainer);
+                console.log('[LinkedIn AI] Parent element:', commentContainer.parentElement);
 
-                btn.onmouseout = () => {
-                    btn.style.transform = 'translateY(0)';
-                    btn.style.boxShadow = '0 4px 12px rgba(215,255,86,0.4)';
-                };
+                // Use DIV instead of BUTTON to avoid form submission
+                const btn = document.createElement('div');
+                btn.setAttribute('role', 'button');
+                btn.setAttribute('aria-label', 'Cycle through AI draft comments');
+                btn.setAttribute('data-ai-cycle-button', 'true');
+                btn.innerHTML = `<span style="font-size: 16px; margin-right: 4px;">↻</span>${currentDraftIndex + 1}/${drafts.length}`;
+                btn.style.cssText = `
+        position: fixed;
+        bottom: 50%;
+        right: 24px;
+        z-index: 99999;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
+        color: #1c1c1c;
+        border: none;
+        border-radius: 10px;
+        font-family: 'JetBrains Mono', monospace;
+        font-weight: 600;
+        font-size: 13px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(215, 255, 86, 0.4);
+        transition: all 0.2s ease-out;
+        display: flex;
+        align-items: center;
+        user-select: none;
+        -webkit-user-select: none;
+    `;
 
-                btn.onclick = () => {
+                // Hover effects
+                btn.addEventListener('mouseenter', () => {
+                    btn.style.transform = 'translateY(-2px) scale(1.05)';
+                    btn.style.boxShadow = '0 6px 16px rgba(215, 255, 86, 0.5)';
+                });
+
+                btn.addEventListener('mouseleave', () => {
+                    btn.style.transform = 'translateY(0) scale(1)';
+                    btn.style.boxShadow = '0 4px 12px rgba(215, 255, 86, 0.4)';
+                });
+
+                // Click handler with maximum safety
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+
+                    if (e.target.closest('[data-ai-cycle-button]') !== btn) {
+                        return;
+                    }
+
                     currentDraftIndex = (currentDraftIndex + 1) % drafts.length;
                     injectDraft(commentBox, drafts[currentDraftIndex]);
-                    btn.innerHTML = `🔄 Draft ${currentDraftIndex + 1}/${drafts.length}`;
-                    btn.style.transform = 'scale(1.1)';
-                    setTimeout(() => btn.style.transform = 'scale(1)', 150);
-                };
+                    btn.innerHTML = `<span style="font-size: 16px; margin-right: 4px;">↻</span>${currentDraftIndex + 1}/${drafts.length}`;
 
+                    btn.style.transform = 'scale(1.15)';
+                    setTimeout(() => btn.style.transform = 'scale(1)', 200);
+                }, true);
+
+                btn.addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                }, true);
+
+                btn.addEventListener('mouseup', (e) => {
+                    e.stopPropagation();
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                }, true);
+
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.stopPropagation();
+                        e.stopImmediatePropagation();
+                        e.preventDefault();
+
+                        currentDraftIndex = (currentDraftIndex + 1) % drafts.length;
+                        injectDraft(commentBox, drafts[currentDraftIndex]);
+                        btn.innerHTML = `<span style="font-size: 16px; margin-right: 4px;">↻</span>${currentDraftIndex + 1}/${drafts.length}`;
+                    }
+                }, true);
+
+                // Append directly to body for now (easier to debug)
                 document.body.appendChild(btn);
+                console.log('[LinkedIn AI] ✅ Cycle button created and appended to body');
             }
 
             function watchForPostSubmit(commentBox) {
@@ -910,8 +987,23 @@
                 watchForPostSubmit(commentBox);
 
                 const notification = document.createElement('div');
-                notification.innerHTML = '✅ AI draft loaded';
-                notification.style.cssText = 'position:fixed;top:24px;right:24px;z-index:99999;padding:12px 20px;background:#28a745;color:white;border-radius:8px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.2);animation:slideIn 0.3s ease-out;';
+                notification.innerHTML = 'AI draft loaded';
+                notification.style.cssText = `
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 99999;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
+    color: #1c1c1c;
+    border-radius: 12px;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    box-shadow: 0 4px 16px rgba(215, 255, 86, 0.4);
+    backdrop-filter: blur(12px);
+    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+`;
 
                 if (!document.getElementById('notif-slide-anim')) {
                     const style = document.createElement('style');

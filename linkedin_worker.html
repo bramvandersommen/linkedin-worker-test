@@ -644,7 +644,10 @@
       
       // Helper to convert \n to <br>
       const formatLineBreaks = (text) => text.replace(/\n/g, '<br>');
-      
+
+      const contentPreview = post.POST_CONTENTS.substring(0, 150);
+      const isLongContent = post.POST_CONTENTS.length > 150;
+
       card.innerHTML = `
         <div class="result-header">
           <h2 class="result-vip">${post.VIP_NAME}</h2>
@@ -678,7 +681,7 @@
           </button>
         </div>
       `;
-      
+
       // Click anywhere on card to expand (except buttons)
       if (isLongContent) {
         const contentBlock = card.querySelector('.result-content');
@@ -691,7 +694,6 @@
           
           const isExpanded = contentBlock.dataset.expanded === 'true';
           const fullContent = contentBlock.dataset.fullContent;
-          const formatLineBreaks = (text) => text.replace(/\n/g, '<br>');
           
           if (isExpanded) {
             contentBlock.innerHTML = formatLineBreaks(fullContent.substring(0, 150)) + '...';
