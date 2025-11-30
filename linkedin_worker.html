@@ -554,7 +554,64 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 3.5 - Line Break Formatting');
+    console.log('[Worker] Version 4 - Added Broadcast Listener');
+
+    // Listen for comment tracking via BroadcastChannel
+    if (typeof BroadcastChannel !== 'undefined') {
+      const commentChannel = new BroadcastChannel('linkedin-ai-comments');
+      
+      commentChannel.addEventListener('message', async (event) => {
+        if (event.data.type === 'COMMENT_POSTED') {
+          console.log('[Worker] 📥 Comment posted!', event.data.data);
+          
+          const commentData = event.data.data;
+          
+          // TODO: Send to N8N webhook
+          try {
+            const response = await fetch('https://primary-production-83b6.up.railway.app/webhook/comment-posted', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                postId: commentData.postID,
+                selectedDraft: commentData.selectedDraft,
+                originalDraft: commentData.originalDraft,
+                finalComment: commentData.finalComment,
+                manualEdits: commentData.manualEdits,
+                commentedAt: commentData.timestamp
+              })
+            });
+            
+            if (response.ok) {
+              console.log('[Worker] ✅ Comment tracked successfully');
+              updateStatus('✅ Comment tracked!');
+            } else {
+              console.error('[Worker] ❌ Failed to track comment:', response.status);
+            }
+          } catch (error) {
+            console.error('[Worker] ❌ Error tracking comment:', error);
+          }
+        }
+      });
+      
+      console.log('[Worker] 👂 Listening for comment tracking via BroadcastChannel');
+    }
+
+    // Also listen for direct postMessage (fallback)
+    window.addEventListener('message', (event) => {
+      const allowedOrigins = ['https://www.linkedin.com', 'https://linkedin.com'];
+      const isAllowed = allowedOrigins.some(origin => 
+        event.origin === origin || event.origin.startsWith(origin)
+      );
+      
+      if (!isAllowed) return;
+      
+      if (event.data.type === 'COMMENT_POSTED') {
+        console.log('[Worker] 📥 Comment posted (postMessage)!', event.data.data);
+        
+        // Same N8N handling as above
+        // (can extract to a shared function)
+      }
+    });
     
     const N8N_WEBHOOK = 'https://webhook-processor-production-84a9.up.railway.app/webhook/linkedin-ai-comments';
     const N8N_ARCHIVE = 'https://webhook-processor-production-84a9.up.railway.app/webhook/archive-post';
