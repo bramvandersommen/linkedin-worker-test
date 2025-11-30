@@ -926,7 +926,7 @@
         if (response.ok) {
           console.log('[Worker] ✅ Comment tracked successfully');
           updateStatus('✅ Comment tracked!');
-          setTimeout(() => window.close(), 2000);
+          // setTimeout(() => window.close(), 2000); fix later
         } else {
           console.error('[Worker] ❌ Tracking failed:', response.status);
           updateStatus('❌ Tracking failed');
