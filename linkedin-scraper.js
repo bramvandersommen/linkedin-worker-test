@@ -731,9 +731,9 @@
                     background: conic-gradient(
                         transparent,
                         #d4ff00,
-                        transparent 25%
+                        transparent 20%
                     );
-                    animation: li-border-rotate 0.9s linear 1;
+                    animation: li-border-rotate 0.7s ease 1;
                     }
 
                     /* Animate border color on texteditor */
@@ -796,13 +796,19 @@
             }
 
             function injectDraft(commentBox, text) {
-                // Split by line breaks, filter empty lines, join with double <br>
-                const lines = text.split('\n').filter(line => line.trim());
-                const htmlContent = lines.join('<br><br>');
+                // Clean up any \n + spaces patterns from GPT output
+                const cleanedText = text.replace(/\n\s+\n/g, '\n\n').replace(/\n\s+/g, '\n');
+
+                // Split by newlines and trim each line
+                const lines = cleanedText.split('\n')
+                .map(line => line.trim())
+                .filter(line => line);
+
+                // Wrap each line in <p> tags
+                const htmlContent = lines.map(line => `<p>${line}</p>`).join('');
 
                 if (commentBox.getAttribute('contenteditable') === 'true') {
-                    // Wrap in single paragraph
-                    commentBox.innerHTML = `<p>${htmlContent}</p>`;
+                    commentBox.innerHTML = htmlContent;
                     commentBox.dispatchEvent(new Event('input', { bubbles: true }));
                 } else {
                     commentBox.value = text;
@@ -811,7 +817,7 @@
 
                 commentBox.focus();
                 highlightCommentBox();
-                console.log('[LinkedIn AI] Injected draft:', text.substring(0, 50) + '...');
+                console.log('[LinkedIn AI] Injected draft with', lines.length, 'lines');
             }
 
             function createCycleButton(commentBox) {
@@ -923,18 +929,26 @@
                         postButton.setAttribute('data-tracked', 'true');
                         postButton.addEventListener('click', () => {
                             setTimeout(() => {
-                                const finalComment = commentBox.textContent || commentBox.value;
-                                const originalDraft = drafts[currentDraftIndex];
+                                // Extract data
+                                const finalComment = commentBox.textContent || commentBox.value || '';
+                                const originalDraft = drafts[currentDraftIndex] || '';
                                 const manualEdits = finalComment.trim() !== originalDraft.trim();
 
-                                Utils.trackComment({
-                                    postID: postData.postID,
-                                    vipName: postData.vipName,
-                                    draftIndex: currentDraftIndex + 1,
-                                    finalComment,
-                                    originalDraft,
-                                    manualEdits
+                                // Build query params
+                                const params = new URLSearchParams({
+                                    action: 'track',
+                                    postId: postData.postID,
+                                    draft: (currentDraftIndex + 1).toString(),
+                                    original: encodeURIComponent(originalDraft),
+                                    comment: encodeURIComponent(finalComment),
+                                    edited: manualEdits.toString()
                                 });
+
+                                // Open worker in new window to process tracking
+                                const workerUrl = `${CONFIG.WORKER_URL}?${params.toString()}`;
+                                window.open(workerUrl, '_blank', 'width=400,height=300');
+
+                                console.log('[LinkedIn AI] Opened worker for comment tracking');
                             }, 500);
                         });
                     }
