@@ -556,6 +556,54 @@
   <script>
     console.log('[Worker] Version 6 - Auto-load + Frontend Dedupe + New Stats');
 
+    // Create broadcast channel for cross-tab sync
+    const syncChannel = new BroadcastChannel('linkedin-ai-sync');
+
+    syncChannel.onmessage = (event) => {
+      if (event.data.type === 'COMMENT_POSTED') {
+        const postId = event.data.postId;
+        console.log('[Worker] Post commented, removing card:', postId);
+        removeCardWithAnimation(postId);
+      }
+      
+      if (event.data.type === 'POST_ARCHIVED') {
+        const postId = event.data.postId;
+        console.log('[Worker] Post archived, removing card:', postId);
+        removeCardWithAnimation(postId);
+      }
+    };
+
+    function removeCardWithAnimation(postId) {
+      const card = document.querySelector(`[data-post-id="${postId}"]`);
+      if (!card) return;
+      
+      // Smooth slide-out animation
+      card.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+      card.style.transform = 'translateX(100%) scale(0.95)';
+      card.style.opacity = '0';
+      card.style.filter = 'blur(4px)';
+      
+      setTimeout(() => {
+        card.remove();
+        
+        // Update stats
+        allEnrichedPosts = allEnrichedPosts.filter(p => p.POST_ID !== postId);
+        seenPostIds.delete(postId);
+        updateStats(allEnrichedPosts.length, skippedTotal, 0, allEnrichedPosts.length);
+        
+        // Show empty state if no posts left
+        if (allEnrichedPosts.length === 0) {
+          document.getElementById('resultsContainer').innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">✅</div>
+              <div class="empty-state-text">All done!</div>
+              <div class="empty-state-hint">No drafts remaining</div>
+            </div>
+          `;
+        }
+      }, 400);
+    }
+
     const N8N_WEBHOOK_BASE_URL = 'https://webhook-processor-production-84a9.up.railway.app/webhook/';
     const N8N_WEBHOOK = `${N8N_WEBHOOK_BASE_URL}linkedin-ai-comments`;
     const N8N_ARCHIVE = `${N8N_WEBHOOK_BASE_URL}archive-post`;
@@ -629,10 +677,19 @@
         });
         
         if (!response.ok) throw new Error('Archive failed');
-        
+
         button.textContent = '✅ Archived';
         button.classList.add('archived');
         console.log('[Worker] Archived post:', postId);
+
+        // Broadcast to other worker tabs
+        syncChannel.postMessage({
+          type: 'POST_ARCHIVED',
+          postId: postId
+        });
+
+        // Remove card with animation
+        setTimeout(() => removeCardWithAnimation(postId), 800);
         
       } catch (error) {
         button.textContent = '❌ Failed';
@@ -994,6 +1051,13 @@
         if (response.ok) {
           console.log('[Worker] ✅ Comment tracked successfully');
           updateStatus('✅ Comment tracked!');
+          
+          // Broadcast to other worker tabs
+          syncChannel.postMessage({
+            type: 'COMMENT_POSTED',
+            postId: trackingData.postId
+          });
+          
           setTimeout(() => window.close(), 2000);
         } else {
           console.error('[Worker] ❌ Tracking failed:', response.status);
