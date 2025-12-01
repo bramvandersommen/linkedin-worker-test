@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 7 - UX & UI updates');
+    console.log('[Worker] Version 7.1 - UX & UI updates');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -578,8 +578,8 @@
       if (!card) return;
       
       // Smooth slide-out animation
-      card.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
-      card.style.transform = 'translateX(100%) scale(0.95)';
+      card.style.transition = 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
+      card.style.transform = 'translateX(-100%) scale(0.95)';
       card.style.opacity = '0';
       card.style.filter = 'blur(4px)';
       
@@ -601,7 +601,7 @@
             </div>
           `;
         }
-      }, 400);
+      }, 1000);
     }
 
     const N8N_WEBHOOK_BASE_URL = 'https://webhook-processor-production-84a9.up.railway.app/webhook/';
