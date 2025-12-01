@@ -783,7 +783,7 @@
         }
         
         const existingPosts = await response.json();
-        
+        console.log(existingPosts);
         console.log('[Worker] Received', existingPosts.length, 'existing posts');
         
         // Separate drafted (display) from commented (dedupe only)
