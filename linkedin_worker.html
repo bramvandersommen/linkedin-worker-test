@@ -929,7 +929,7 @@
         if (response.ok) {
           console.log('[Worker] ✅ Comment tracked successfully');
           updateStatus('✅ Comment tracked!');
-          // setTimeout(() => window.close(), 2000); fix later
+          setTimeout(() => window.close(), 2000);
         } else {
           console.error('[Worker] ❌ Tracking failed:', response.status);
           updateStatus('❌ Tracking failed');

@@ -930,7 +930,7 @@
                         postButton.addEventListener('click', () => {
                             setTimeout(() => {
                                 // Extract data
-                                const finalComment = commentBox.textContent || commentBox.value || '';
+                                const finalComment = commentBox.innerText || commentBox.value || '';
                                 const originalDraft = drafts[currentDraftIndex] || '';
                                 const manualEdits = finalComment.trim() !== originalDraft.trim();
 
