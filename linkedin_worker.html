@@ -556,8 +556,11 @@
   <script>
     console.log('[Worker] Version 5 - PostMessage Fix, error logging');
     
-    const N8N_WEBHOOK = 'https://webhook-processor-production-84a9.up.railway.app/webhook/linkedin-ai-comments';
-    const N8N_ARCHIVE = 'https://webhook-processor-production-84a9.up.railway.app/webhook/archive-post';
+    const N8N_WEBHOOK_BASE_URL = 'https://webhook-processor-production-84a9.up.railway.app/webhook/';
+    const N8N_WEBHOOK = `${N8N_WEBHOOK_BASE_URL}linkedin-ai-comments`;
+    const N8N_ARCHIVE = `${N8N_WEBHOOK_BASE_URL}archive-post`;
+    const N8N_COMMENT_POSTED = `${N8N_WEBHOOK_BASE_URL}comment-posted`;
+
     const ALLOWED_ORIGINS = ['https://www.linkedin.com', 'https://linkedin.com'];
     const BATCH_SIZE = 5;
     
@@ -910,7 +913,7 @@
       updateStatus('📤 Syncing comment status...', true);
       
       // Send to N8N
-      fetch('https://primary-production-83b6.up.railway.app/webhook/comment-posted', {
+      fetch(N8N_COMMENT_POSTED, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
