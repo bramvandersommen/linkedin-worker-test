@@ -269,60 +269,101 @@
             const allCards = document.querySelectorAll('[data-finite-scroll-hotkey-item]');
 
             allCards.forEach((card) => {
-                try {
-                    const profileLink = card.querySelector('a[href*="/in/"]');
-                    const profileURL = profileLink?.getAttribute('href') || '';
+            try {
+                // PRIORITY 1: Extract profile ID from href
+                const profileLink = card.querySelector('a[href*="/in/"]');
+                const profileURL = profileLink?.getAttribute('href') || '';
+                
+                // Extract profile ID (e.g., "/in/simonsinek" → "simonsinek")
+                const profileIdMatch = profileURL.match(/\/in\/([^\/\?]+)/);
+                const profileId = profileIdMatch ? profileIdMatch[1] : '';
 
-                    const strongTag = card.querySelector('.nt-card__headline strong');
-                    const nameText = strongTag?.textContent.trim() || '';
+                // FALLBACK: Extract name from text
+                const strongTag = card.querySelector('.nt-card__headline strong');
+                const nameText = strongTag?.textContent.trim() || '';
 
-                    const headlineSpan = card.querySelector('.nt-card__headline span.nt-card__text--3-line');
-                    const fullHeadline = headlineSpan?.textContent.trim() || '';
+                const headlineSpan = card.querySelector('.nt-card__headline span.nt-card__text--3-line');
+                const fullHeadline = headlineSpan?.textContent.trim() || '';
 
-                    const postLink = card.querySelector('.nt-card__headline[href*="highlightedUpdateUrn"]');
-                    const postURL = postLink?.getAttribute('href') || '';
+                const postLink = card.querySelector('.nt-card__headline[href*="highlightedUpdateUrn"]');
+                const postURL = postLink?.getAttribute('href') || '';
 
-                    const isVIP = CONFIG.VIP_LIST.some(vip => {
-                        const vipStr = String(vip);
-                        if (vipStr.includes('/')) {
-                            return Utils.normalizeURL(vipStr) === Utils.normalizeURL(profileURL);
-                        } else {
-                            return Utils.normalizeName(vipStr) === Utils.normalizeName(nameText);
+                // ENHANCED VIP MATCHING with fallback cascade
+                let matchedVIP = null;
+                let matchMethod = '';
+                
+                const isVIP = CONFIG.VIP_LIST.some(vip => {
+                    // If VIP list loaded from external config
+                    if (typeof vip === 'object') {
+                        // Priority 1: Match by profile ID
+                        if (profileId && vip.profileId) {
+                            if (profileId.toLowerCase() === vip.profileId.toLowerCase()) {
+                                matchedVIP = vip;
+                                matchMethod = 'profileId';
+                                return true;
+                            }
                         }
-                    });
+                        
+                        // Priority 2: Match by profile URL
+                        if (profileURL && vip.profileUrl) {
+                            if (Utils.normalizeURL(profileURL) === Utils.normalizeURL(vip.profileUrl)) {
+                                matchedVIP = vip;
+                                matchMethod = 'profileUrl';
+                                return true;
+                            }
+                        }
+                        
+                        // Priority 3: Match by name (fuzzy)
+                        if (nameText && vip.name) {
+                            if (Utils.normalizeName(nameText) === Utils.normalizeName(vip.name)) {
+                                matchedVIP = vip;
+                                matchMethod = 'name';
+                                return true;
+                            }
+                        }
+                        
+                        return false;
+                    }
+                    
+                    // Legacy: String-based VIP list (backward compatible)
+                    const vipStr = String(vip);
+                    if (vipStr.includes('/')) {
+                        return Utils.normalizeURL(vipStr) === Utils.normalizeURL(profileURL);
+                    } else {
+                        return Utils.normalizeName(vipStr) === Utils.normalizeName(nameText);
+                    }
+                });
 
-                    if (!isVIP) return;
-                    if (!/posted:/i.test(fullHeadline)) return;
-
-                    const postID = Utils.extractPostID(postURL);
-                    if (!postID || seenPostIDs.has(postID)) return;
-
-                    seenPostIDs.add(postID);
-
-                    const contentMatch = fullHeadline.match(/posted:\s*(.+)$/is);
-                    const postContent = contentMatch ? contentMatch[1].trim() : fullHeadline;
-
-                    matches.push({
-                        postID,
-                        nameOfVIP: nameText,
-                        urlToPost: postURL.startsWith('http') ? postURL : `https://www.linkedin.com${postURL}`,
-                        postContent,
-                        cardElement: card
-                    });
-
-                } catch (err) {
-                    console.warn('[LinkedIn AI] Error extracting card:', err);
+                if (!isVIP) return;
+                
+                // Log match method for debugging
+                if (matchMethod) {
+                    console.log(`[LinkedIn AI] ✓ Matched VIP via ${matchMethod}:`, nameText);
                 }
-            });
+                
+                if (!/posted:/i.test(fullHeadline)) return;
 
-            const elapsed = Math.round(performance.now() - startTime);
-            onProgress?.(`✅ Found ${matches.length} VIP posts in ${elapsed}ms`);
+                const postID = Utils.extractPostID(postURL);
+                if (!postID || seenPostIDs.has(postID)) return;
 
-            return {
-                meta: { totalCards: allCards.length, finalMatchCount: matches.length, elapsed: `${elapsed}ms`, warnings },
-                matches
-            };
-        }
+                seenPostIDs.add(postID);
+
+                const contentMatch = fullHeadline.match(/posted:\s*(.+)$/is);
+                const postContent = contentMatch ? contentMatch[1].trim() : fullHeadline;
+
+                matches.push({
+                    postID,
+                    nameOfVIP: nameText,
+                    urlToPost: postURL.startsWith('http') ? postURL : `https://www.linkedin.com${postURL}`,
+                    postContent,
+                    cardElement: card
+                });
+
+            } catch (err) {
+                console.warn('[LinkedIn AI] Error extracting card:', err);
+                // Continue processing other cards even if one fails
+            }
+        });
 
         // ───────────────────────────────────────────────────────────────────────────
         // Enhanced FAB Button
