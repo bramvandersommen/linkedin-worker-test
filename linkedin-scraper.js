@@ -230,9 +230,25 @@
 
             onProgress?.('🔍 Starting scraper...');
 
-            const parent = document.querySelector('.scaffold-finite-scroll');
+            // Self-healing: Try multiple selectors for notification container
+            const containerSelectors = [
+                '.scaffold-finite-scroll',
+                '[role="main"] .scaffold-finite-scroll',
+                '.notifications-container',
+                '[data-view-name="notifications-list"]'
+            ];
+
+            let parent = null;
+            for (const selector of containerSelectors) {
+                parent = document.querySelector(selector);
+                if (parent) {
+                    console.log(`[LinkedIn AI] Found container via: ${selector}`);
+                    break;
+                }
+            }
+
             if (!parent) {
-                onProgress?.('❌ Notification container not found');
+                onProgress?.('❌ Notification container not found (tried multiple selectors)');
                 return { meta: { warnings: ['Container not found'], elapsed: 0 }, matches: [] };
             }
 
@@ -241,7 +257,7 @@
 
                 const start = window.scrollY;
                 const end = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
-                const duration = 200;
+                const duration = 180; // Slightly faster: 200ms → 180ms
                 const startT = performance.now();
 
                 await new Promise(resolve => {
@@ -255,18 +271,41 @@
                     requestAnimationFrame(animate);
                 });
 
-                await Utils.randomPause();
+                await Utils.randomPause(600, 1200); // Slightly faster: 800-1500ms → 600-1200ms
 
                 const showMoreBtn = parent.querySelector('button.scaffold-finite-scroll__load-button');
                 if (showMoreBtn && !showMoreBtn.disabled && showMoreBtn.offsetParent !== null) {
                     onProgress?.('🖱️ Clicking "Show more"...');
                     showMoreBtn.click();
-                    await Utils.randomPause();
+                    await Utils.randomPause(800, 1400);
+                } else if (round > 2) {
+                    // Early exit: If no "Show more" button after round 2, stop scrolling
+                    onProgress?.(`✓ No more content to load (round ${round})`);
+                    break;
                 }
             }
 
             onProgress?.('🔎 Extracting VIP posts...');
-            const allCards = document.querySelectorAll('[data-finite-scroll-hotkey-item]');
+            // Self-healing: Try multiple selectors for notification cards
+            const cardSelectors = [
+                '[data-finite-scroll-hotkey-item]',
+                '.nt-card',
+                '[data-view-name="notification-card-container"]',
+                'article.nt-card'
+            ];
+
+            let allCards = [];
+            for (const selector of cardSelectors) {
+                allCards = document.querySelectorAll(selector);
+                if (allCards.length > 0) {
+                    console.log(`[LinkedIn AI] Found ${allCards.length} cards via: ${selector}`);
+                    break;
+                }
+            }
+
+            if (allCards.length === 0) {
+                onProgress?.('⚠️ No notification cards found (tried multiple selectors)');
+            }
 
             allCards.forEach((card) => {
             try {
@@ -362,6 +401,14 @@
             } catch (err) {
                 console.warn('[LinkedIn AI] Error extracting card:', err);
                 // Continue processing other cards even if one fails
+            }
+            const elapsed = Math.round(performance.now() - startTime);
+            onProgress?.(`✅ Found ${matches.length} VIP posts in ${elapsed}ms`);
+
+            // Log summary for debugging
+            if (matches.length === 0 && allCards.length > 0) {
+                console.warn('[LinkedIn AI] No VIP matches found. Checked', allCards.length, 'cards against', CONFIG.VIP_LIST.length, 'VIPs');
+                console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
             }
         });
 
