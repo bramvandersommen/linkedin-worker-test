@@ -1,18 +1,22 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter
 // @namespace    https://offhoursai.com/
-// @version      3.0
+// @version      3.1
 // @description  LinkedIn AI Post Commenter scraper with OffhoursAI branding.
 // @match        https://www.linkedin.com/notifications/*
 // @match        https://linkedin.com/notifications/*
 // @match        *://www.linkedin.com/feed/*
+// @require      https://bramvandersommen.github.io/linkedin-worker-test/vip-config.js
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
 
 (function() {
     'use strict';
-
+    
+    // ═════════════════════════════════════════════════════════════════════════════
+    // Dark Theme Detection & Adjustment
+    // ═════════════════════════════════════════════════════════════════════════════
     const targets = [document.documentElement, document.body];
 
     function isDarkTheme(element) {
@@ -32,11 +36,12 @@
         style.textContent = `body, html {background-color: #1c1c1c !important;}`;
         document.head.appendChild(style);
     }
+    
     /**
- * LinkedIn AI Assistant - Unified Script
- * Handles: Notifications scraping, Post comment injection, Comment tracking
- * Version: 1.1.0 (Patched)
- */
+     * LinkedIn AI Assistant - Unified Script
+     * Handles: Notifications scraping, Post comment injection, Comment tracking
+     * Version: 1.1.0 (Patched)
+     */
 
     // ═════════════════════════════════════════════════════════════════════════════
     // CONFIGURATION
@@ -46,11 +51,36 @@
         WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html',
         N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
         VIP_LIST: [
-            'Patrick Huijs',
-            'Joshua van den Hemel',
-            'https://www.linkedin.com/in/some-profile/'
+            {
+                name: 'Patrick Huijs',
+                profileUrl: 'https://www.linkedin.com/in/patrick-huijs',
+                profileId: 'patrick-huijs'
+            },
+            {
+                name: 'Simon Sinek',
+                profileUrl: 'https://www.linkedin.com/in/simonsinek',
+                profileId: 'simonsinek'
+            }
         ]
     };
+    
+    // Wait for config to load
+    /*const CONFIG = {
+        WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html',
+        N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
+        VIP_LIST: []
+    };
+
+    // Load VIPs from external config
+    if (window.LINKEDIN_AI_VIP_CONFIG) {
+        CONFIG.VIP_LIST = window.LINKEDIN_AI_VIP_CONFIG.vips;
+        console.log('[LinkedIn AI] Loaded', CONFIG.VIP_LIST.length, 'VIPs (version', window.LINKEDIN_AI_VIP_CONFIG.version + ')');
+    } else {
+        console.warn('[LinkedIn AI] VIP config not loaded, using fallback');
+        CONFIG.VIP_LIST = [
+            { name: 'Patrick Huijs', profileId: 'patrick-huijs' }
+        ];
+    }*/
 
     // ═════════════════════════════════════════════════════════════════════════════
     // PAGE DETECTION
@@ -393,6 +423,8 @@
                 matches.push({
                     postID,
                     nameOfVIP: nameText,
+                    profileURL: profileURL.startsWith('http') ? profileURL : `https://www.linkedin.com${profileURL}`,
+                    profileId: profileId,
                     urlToPost: postURL.startsWith('http') ? postURL : `https://www.linkedin.com${postURL}`,
                     postContent,
                     cardElement: card
@@ -402,15 +434,22 @@
                 console.warn('[LinkedIn AI] Error extracting card:', err);
                 // Continue processing other cards even if one fails
             }
-            const elapsed = Math.round(performance.now() - startTime);
-            onProgress?.(`✅ Found ${matches.length} VIP posts in ${elapsed}ms`);
+        }); // Close the forEach here
 
-            // Log summary for debugging
-            if (matches.length === 0 && allCards.length > 0) {
-                console.warn('[LinkedIn AI] No VIP matches found. Checked', allCards.length, 'cards against', CONFIG.VIP_LIST.length, 'VIPs');
-                console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
-            }
-        });
+        const elapsed = Math.round(performance.now() - startTime);
+        onProgress?.(`✅ Found ${matches.length} VIP posts in ${elapsed}ms`);
+
+        // Log summary for debugging
+        if (matches.length === 0 && allCards.length > 0) {
+            console.warn('[LinkedIn AI] No VIP matches found. Checked', allCards.length, 'cards against', CONFIG.VIP_LIST.length, 'VIPs');
+            console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
+        }
+
+        return {
+            meta: { totalCards: allCards.length, finalMatchCount: matches.length, elapsed: `${elapsed}ms`, warnings },
+            matches
+        };
+    } // Close scrapeNotifications function
 
         // ───────────────────────────────────────────────────────────────────────────
         // Enhanced FAB Button

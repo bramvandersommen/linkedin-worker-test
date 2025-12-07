@@ -987,37 +987,81 @@
 
     // Message handler
     window.addEventListener('message', async (event) => {
-      const isAllowedOrigin = ALLOWED_ORIGINS.some(origin => 
-        event.origin === origin || event.origin.startsWith(origin)
-      );
-      
-      if (!isAllowedOrigin) return;
-      
-      if (event.data.type === 'PING') {
-        event.source.postMessage({ type: 'WORKER_READY' }, event.origin);
-        if (!linkedInConnected) {
-          updateConnectionStatus(true);
-        }
-        return;
-      }
-      
       if (event.data.type === 'VIP_QUEUE') {
         const posts = event.data.posts;
         
-        // Don't reset - we keep existing posts
-        // allEnrichedPosts = []; // REMOVED
-        // seenPostIds.clear(); // REMOVED
-        processedTotal = 0;
-        skippedTotal = 0;
-        
-        event.source.postMessage({
-          type: 'PROCESSING_STATUS',
-          message: `Checking ${posts.length} posts...`
-        }, event.origin);
-        
-        await processAllPosts(posts, event.source, event.origin);
+        try {
+          // Send to N8N
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ posts })
+          });
+          
+          // Check if response is ok
+          if (!response.ok) {
+            throw new Error(`N8N returned ${response.status}: ${response.statusText}`);
+          }
+          
+          // Parse JSON safely
+          let data;
+          try {
+            data = await response.json();
+          } catch (jsonError) {
+            throw new Error('Invalid response from N8N (not valid JSON)');
+          }
+          
+          // Check for error response from N8N
+          if (data.success === false) {
+            displayError(data);
+            return;
+          }
+          
+          // Check if we got posts back
+          if (!data || !Array.isArray(data) || data.length === 0) {
+            displayError({
+              error: 'EMPTY_RESPONSE',
+              message: 'No drafts generated',
+              details: 'N8N workflow completed but returned no posts.'
+            });
+            return;
+          }
+          
+          // Success - display drafts
+          displayDrafts(data);
+          
+        } catch (error) {
+          console.error('[Worker] Error:', error);
+          displayError({
+            error: 'FETCH_ERROR',
+            message: error.message,
+            details: 'Failed to communicate with N8N workflow.'
+          });
+        }
       }
     });
+
+    function displayError(errorData) {
+      const container = document.getElementById('drafts-container');
+      
+      let errorMessage = `
+        <div style="padding: 20px; background: #fee; border: 2px solid #c33; border-radius: 8px;">
+          <h2 style="color: #c33; margin-top: 0;">⚠️ ${errorData.error || 'Error'}</h2>
+          <p style="font-size: 16px; margin: 10px 0;">${errorData.message}</p>
+      `;
+      
+      if (errorData.details) {
+        errorMessage += `<p style="color: #666; font-size: 14px;">${errorData.details}</p>`;
+      }
+      
+      if (errorData.action) {
+        errorMessage += `<p style="background: #ffe; padding: 10px; border-left: 3px solid #fc0; margin-top: 15px;"><strong>Action needed:</strong> ${errorData.action}</p>`;
+      }
+      
+      errorMessage += `</div>`;
+      
+      container.innerHTML = errorMessage;
+    }
 
     // Check for query params (comment tracking mode)
     const urlParams = new URLSearchParams(window.location.search);
