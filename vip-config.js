@@ -1,10 +1,10 @@
 // VIP Configuration - Auto-updated by N8N
-// Last updated: 2025-12-08T05:00:35.715Z
-// Active VIPs: 9
+// Last updated: 2025-12-08T20:56:34.664Z
+// Active VIPs: 10
 
 window.LINKEDIN_AI_VIP_CONFIG = {
-  version: "1765170035715", // Unix timestamp as version
-  lastUpdated: "2025-12-08T05:00:35.715Z",
+  version: "1765227394664", // Unix timestamp as version
+  lastUpdated: "2025-12-08T20:56:34.664Z",
   vips: [
   {
     "name": "Toni Hopponen",
@@ -50,6 +50,11 @@ window.LINKEDIN_AI_VIP_CONFIG = {
     "name": "Alex Stefan",
     "profileUrl": "https://www.linkedin.com/in/alex-designlion/",
     "profileId": "alex-designlion"
+  },
+  {
+    "name": "Patrick Huijs",
+    "profileUrl": "https://www.linkedin.com/in/patrick-huijs/",
+    "profileId": "patrick-huijs"
   }
 ]
 };
