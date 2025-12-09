@@ -345,7 +345,7 @@
                 
                 // Extract profile ID (e.g., "/in/simonsinek" → "simonsinek")
                 const profileIdMatch = profileURL.match(/\/in\/([^\/\?]+)/);
-                const profileId = profileIdMatch ? profileIdMatch[1] : '';
+                const profileId = profileIdMatch ? decodeURIComponent(profileIdMatch[1]) : '';
 
                 // FALLBACK: Extract name from text
                 const strongTag = card.querySelector('.nt-card__headline strong');
