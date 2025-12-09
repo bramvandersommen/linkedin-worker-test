@@ -1002,57 +1002,16 @@
 
     // Message handler
     window.addEventListener('message', async (event) => {
+      if (!ALLOWED_ORIGINS.includes(event.origin)) return;
+      
       if (event.data.type === 'VIP_QUEUE') {
         const posts = event.data.posts;
+        updateConnectionStatus(true);
         
-        try {
-          // Send to N8N
-          const response = await fetch(N8N_WEBHOOK, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ posts })
-          });
-          
-          // Check if response is ok
-          if (!response.ok) {
-            throw new Error(`N8N returned ${response.status}: ${response.statusText}`);
-          }
-          
-          // Parse JSON safely
-          let data;
-          try {
-            data = await response.json();
-          } catch (jsonError) {
-            throw new Error('Invalid response from N8N (not valid JSON)');
-          }
-          
-          // Check for error response from N8N
-          if (data.success === false) {
-            displayError(data);
-            return;
-          }
-          
-          // Check if we got posts back
-          if (!data || !Array.isArray(data) || data.length === 0) {
-            displayError({
-              error: 'EMPTY_RESPONSE',
-              message: 'No drafts generated',
-              details: 'N8N workflow completed but returned no posts.'
-            });
-            return;
-          }
-          
-          // Success - display drafts
-          displayDrafts(data);
-          
-        } catch (error) {
-          console.error('[Worker] Error:', error);
-          displayError({
-            error: 'FETCH_ERROR',
-            message: error.message,
-            details: 'Failed to communicate with N8N workflow.'
-          });
-        }
+        console.log('[Worker] Received VIP_QUEUE with', posts.length, 'posts');
+        
+        // Process through existing workflow (batching, fake progress, N8N, display)
+        await processAllPosts(posts, event.source, event.origin);
       }
     });
 
