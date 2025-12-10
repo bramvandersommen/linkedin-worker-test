@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 9.1 - VIP updates');
+    console.log('[Worker] Version 10.0 - Fixed dedupe case sensitivity bug');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -847,12 +847,12 @@
         const draftedPosts = existingPosts.filter(p => p.STATUS === 'Drafted');
         const commentedPosts = existingPosts.filter(p => p.STATUS === 'Commented');
         
-        // Add commented post IDs to seenPostIds (for deduping)
-        commentedPosts.forEach(p => {
-          seenPostIds.add(p.POST_ID);
-        });
-        
+        // Add ALL post IDs to seenPostIds (for deduping) - both Drafted and Commented
+        draftedPosts.forEach(p => seenPostIds.add(p.POST_ID));
+        commentedPosts.forEach(p => seenPostIds.add(p.POST_ID));
+
         console.log('[Worker] Drafted:', draftedPosts.length, 'Commented (for dedupe):', commentedPosts.length);
+        console.log('[Worker] seenPostIds initialized with', seenPostIds.size, 'unique IDs');
         
         // Display drafted posts
         if (draftedPosts.length > 0) {
@@ -924,19 +924,28 @@
 
     async function processAllPosts(posts, eventSource, eventOrigin) {
       console.log('[Worker] 🔍 Deduping', posts.length, 'incoming posts...');
-      
+
       // Dedupe: filter out posts already in seenPostIds
+      // Handle both postID (from scraper) and POST_ID (from Google Sheets)
       const newPosts = posts.filter(post => {
-        if (seenPostIds.has(post.postID)) {
+        const postId = post.postID || post.POST_ID; // Normalize field name
+        if (seenPostIds.has(postId)) {
           skippedTotal++;
-          console.log('[Worker] ⏭️ Skipping already processed:', post.postID);
+          console.log('[Worker] ⏭️ Skipping already processed:', postId);
           return false;
         }
         return true;
       });
       
+      // Add new post IDs to seenPostIds immediately to prevent reprocessing
+      newPosts.forEach(post => {
+        const postId = post.postID || post.POST_ID;
+        seenPostIds.add(postId);
+      });
+
       console.log('[Worker] After dedupe:', newPosts.length, 'new,', skippedTotal, 'skipped');
-      
+      console.log('[Worker] seenPostIds now contains', seenPostIds.size, 'unique IDs');
+
       if (newPosts.length === 0) {
         updateStatus(`⏭️ All ${posts.length} posts already processed`);
         updateStats(allEnrichedPosts.length, skippedTotal, 0, allEnrichedPosts.length);

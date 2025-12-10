@@ -249,6 +249,198 @@
         }
 
         // ───────────────────────────────────────────────────────────────────────────
+        // Self-Healing Helper Functions
+        // ───────────────────────────────────────────────────────────────────────────
+
+        /**
+         * Multi-strategy profile extraction with graceful degradation
+         * Tries 6 different methods to extract profile data
+         */
+        function extractProfileData(element) {
+            const strategies = [
+                // Strategy 1: Standard profile link
+                (el) => {
+                    const link = el.querySelector('a[href*="/in/"]');
+                    if (link) return { url: link.getAttribute('href'), source: 'standard-link' };
+                },
+                // Strategy 2: Any link with /in/ in href (more permissive)
+                (el) => {
+                    const links = el.querySelectorAll('a[href]');
+                    for (const link of links) {
+                        const href = link.getAttribute('href');
+                        if (href && href.includes('/in/')) {
+                            return { url: href, source: 'permissive-link' };
+                        }
+                    }
+                },
+                // Strategy 3: data-tracking-* attributes (LinkedIn often uses these)
+                (el) => {
+                    const tracked = el.querySelector('[data-tracking-id*="profile"]');
+                    if (tracked) {
+                        const trackingId = tracked.getAttribute('data-tracking-id');
+                        return { url: `/in/${trackingId}`, source: 'tracking-id' };
+                    }
+                },
+                // Strategy 4: Walk up DOM to find profile link in parent containers
+                (el) => {
+                    let current = el;
+                    for (let i = 0; i < 5; i++) {
+                        if (!current.parentElement) break;
+                        current = current.parentElement;
+                        const link = current.querySelector('a[href*="/in/"]');
+                        if (link) return { url: link.getAttribute('href'), source: 'parent-walk' };
+                    }
+                },
+                // Strategy 5: Text-based name extraction from strong/bold tags
+                (el) => {
+                    const strong = el.querySelector('strong, b, .nt-card__headline strong');
+                    if (strong && strong.textContent.trim()) {
+                        return { name: strong.textContent.trim(), source: 'strong-tag' };
+                    }
+                },
+                // Strategy 6: aria-label attributes (accessibility metadata)
+                (el) => {
+                    const labeled = el.querySelector('[aria-label*="profile"], [aria-label*="Profile"]');
+                    if (labeled) {
+                        const label = labeled.getAttribute('aria-label');
+                        return { name: label.split(' ')[0], source: 'aria-label' };
+                    }
+                }
+            ];
+
+            // Try each strategy
+            for (const strategy of strategies) {
+                try {
+                    const result = strategy(element);
+                    if (result) {
+                        console.log(`[LinkedIn AI] Profile extracted via ${result.source}`);
+                        return result;
+                    }
+                } catch (err) {
+                    // Silently continue to next strategy
+                }
+            }
+
+            return { source: 'none' }; // Graceful failure
+        }
+
+        /**
+         * Pattern-based post detection
+         * Finds notification cards by text content patterns, not CSS selectors
+         */
+        function findPostsByPattern(container) {
+            const postCards = [];
+            const postPatterns = [/posted:/i, /shared this/i, /commented on this/i, /reposted this/i];
+
+            // Walk all text nodes to find post indicators
+            const walker = document.createTreeWalker(
+                container,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            const matchedElements = new Set();
+
+            let node;
+            while (node = walker.nextNode()) {
+                const text = node.textContent.trim();
+
+                // Check if text matches any post pattern
+                if (postPatterns.some(pattern => pattern.test(text))) {
+                    // Walk up to find the card container
+                    let current = node.parentElement;
+                    let depth = 0;
+
+                    while (current && depth < 10) {
+                        // Look for container attributes that suggest it's a card
+                        if (current.hasAttribute('data-finite-scroll-hotkey-item') ||
+                            current.classList.contains('nt-card') ||
+                            current.tagName === 'ARTICLE' ||
+                            current.hasAttribute('data-view-name')) {
+
+                            if (!matchedElements.has(current)) {
+                                matchedElements.add(current);
+                                postCards.push(current);
+                            }
+                            break;
+                        }
+                        current = current.parentElement;
+                        depth++;
+                    }
+                }
+            }
+
+            return postCards;
+        }
+
+        /**
+         * Retry wrapper with exponential backoff
+         */
+        async function retryWithBackoff(fn, maxAttempts = 3, baseDelay = 2000) {
+            let lastError;
+
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                try {
+                    return await fn(attempt);
+                } catch (error) {
+                    lastError = error;
+                    if (attempt < maxAttempts) {
+                        const delay = baseDelay * Math.pow(2, attempt - 1);
+                        console.log(`[LinkedIn AI] Attempt ${attempt} failed, retrying in ${delay}ms...`);
+                        await new Promise(resolve => setTimeout(resolve, delay));
+                    }
+                }
+            }
+
+            throw lastError;
+        }
+
+        /**
+         * Find notification container with pattern-based fallback
+         */
+        function findNotificationContainer() {
+            // First try: Standard selectors
+            const containerSelectors = [
+                '.scaffold-finite-scroll',
+                '[role="main"] .scaffold-finite-scroll',
+                '.notifications-container',
+                '[data-view-name="notifications-list"]'
+            ];
+
+            for (const selector of containerSelectors) {
+                const el = document.querySelector(selector);
+                if (el) {
+                    console.log(`[LinkedIn AI] Container found via selector: ${selector}`);
+                    return el;
+                }
+            }
+
+            // Fallback: Find by text patterns
+            // Look for elements containing multiple "posted:" occurrences
+            const allElements = document.querySelectorAll('[role="main"] *, main *');
+            let bestCandidate = null;
+            let maxMatches = 0;
+
+            for (const el of allElements) {
+                const text = el.textContent || '';
+                const matches = (text.match(/posted:/gi) || []).length;
+
+                if (matches > maxMatches && matches >= 3) {
+                    maxMatches = matches;
+                    bestCandidate = el;
+                }
+            }
+
+            if (bestCandidate) {
+                console.log(`[LinkedIn AI] Container found via pattern (${maxMatches} post indicators)`);
+                return bestCandidate;
+            }
+
+            return null;
+        }
+
+        // ───────────────────────────────────────────────────────────────────────────
         // Scraper Logic
         // ───────────────────────────────────────────────────────────────────────────
 
@@ -260,26 +452,13 @@
 
             onProgress?.('🔍 Starting scraper...');
 
-            // Self-healing: Try multiple selectors for notification container
-            const containerSelectors = [
-                '.scaffold-finite-scroll',
-                '[role="main"] .scaffold-finite-scroll',
-                '.notifications-container',
-                '[data-view-name="notifications-list"]'
-            ];
-
-            let parent = null;
-            for (const selector of containerSelectors) {
-                parent = document.querySelector(selector);
-                if (parent) {
-                    console.log(`[LinkedIn AI] Found container via: ${selector}`);
-                    break;
-                }
-            }
+            // Use self-healing container finder
+            const parent = findNotificationContainer();
 
             if (!parent) {
-                onProgress?.('❌ Notification container not found (tried multiple selectors)');
-                return { meta: { warnings: ['Container not found'], elapsed: 0 }, matches: [] };
+                onProgress?.('❌ Notification container not found (tried selectors + patterns)');
+                warnings.push('Container not found');
+                return { meta: { warnings, elapsed: 0 }, matches: [] };
             }
 
             for (let round = 1; round <= 5; round++) {
@@ -316,7 +495,8 @@
             }
 
             onProgress?.('🔎 Extracting VIP posts...');
-            // Self-healing: Try multiple selectors for notification cards
+
+            // Self-healing: Try selectors first, then pattern-based detection
             const cardSelectors = [
                 '[data-finite-scroll-hotkey-item]',
                 '.nt-card',
@@ -326,30 +506,46 @@
 
             let allCards = [];
             for (const selector of cardSelectors) {
-                allCards = document.querySelectorAll(selector);
+                allCards = Array.from(document.querySelectorAll(selector));
                 if (allCards.length > 0) {
-                    console.log(`[LinkedIn AI] Found ${allCards.length} cards via: ${selector}`);
+                    console.log(`[LinkedIn AI] Found ${allCards.length} cards via selector: ${selector}`);
                     break;
                 }
             }
 
+            // Fallback: Pattern-based detection if selectors failed
             if (allCards.length === 0) {
-                onProgress?.('⚠️ No notification cards found (tried multiple selectors)');
+                onProgress?.('⚠️ Selectors failed, trying pattern-based detection...');
+                allCards = findPostsByPattern(parent);
+                if (allCards.length > 0) {
+                    console.log(`[LinkedIn AI] Found ${allCards.length} cards via pattern matching`);
+                    warnings.push(`Selector fallback: used pattern detection`);
+                } else {
+                    onProgress?.('⚠️ No notification cards found (tried selectors + patterns)');
+                    warnings.push('No cards found');
+                }
             }
 
             allCards.forEach((card) => {
             try {
-                // PRIORITY 1: Extract profile ID from href
-                const profileLink = card.querySelector('a[href*="/in/"]');
-                const profileURL = profileLink?.getAttribute('href') || '';
-                
-                // Extract profile ID (e.g., "/in/simonsinek" → "simonsinek")
-                const profileIdMatch = profileURL.match(/\/in\/([^\/\?]+)/);
-                const profileId = profileIdMatch ? decodeURIComponent(profileIdMatch[1]) : '';
+                // Use multi-strategy profile extraction
+                const profileData = extractProfileData(card);
 
-                // FALLBACK: Extract name from text
-                const strongTag = card.querySelector('.nt-card__headline strong');
-                const nameText = strongTag?.textContent.trim() || '';
+                let profileURL = profileData.url || '';
+                let profileId = '';
+                let nameText = profileData.name || '';
+
+                // Extract profile ID from URL if available
+                if (profileURL) {
+                    const profileIdMatch = profileURL.match(/\/in\/([^\/\?]+)/);
+                    profileId = profileIdMatch ? decodeURIComponent(profileIdMatch[1]) : '';
+                }
+
+                // Additional fallback: Try standard name extraction if not found yet
+                if (!nameText) {
+                    const strongTag = card.querySelector('.nt-card__headline strong, strong, b');
+                    nameText = strongTag?.textContent.trim() || '';
+                }
 
                 const headlineSpan = card.querySelector('.nt-card__headline span.nt-card__text--3-line');
                 const fullHeadline = headlineSpan?.textContent.trim() || '';
@@ -404,12 +600,12 @@
                 });
 
                 if (!isVIP) return;
-                
+
                 // Log match method for debugging
                 if (matchMethod) {
                     console.log(`[LinkedIn AI] ✓ Matched VIP via ${matchMethod}:`, nameText);
                 }
-                
+
                 if (!/posted:/i.test(fullHeadline)) return;
 
                 const postID = Utils.extractPostID(postURL);
@@ -420,15 +616,37 @@
                 const contentMatch = fullHeadline.match(/posted:\s*(.+)$/is);
                 const postContent = contentMatch ? contentMatch[1].trim() : fullHeadline;
 
-                matches.push({
+                // Graceful degradation: Accept partial data with warnings
+                const matchData = {
                     postID,
                     nameOfVIP: nameText,
-                    profileURL: profileURL.startsWith('http') ? profileURL : `https://www.linkedin.com${profileURL}`,
-                    profileId: profileId,
+                    profileURL: profileURL.startsWith('http') ? profileURL : (profileURL ? `https://www.linkedin.com${profileURL}` : ''),
+                    profileId: profileId || '',
                     urlToPost: postURL.startsWith('http') ? postURL : `https://www.linkedin.com${postURL}`,
                     postContent,
-                    cardElement: card
-                });
+                    cardElement: card,
+                    partialData: false // Track if data is incomplete
+                };
+
+                // Track what data we're missing
+                const missingFields = [];
+                if (!profileId) missingFields.push('profileId');
+                if (!profileURL) missingFields.push('profileURL');
+                if (!nameText) missingFields.push('name');
+
+                if (missingFields.length > 0) {
+                    matchData.partialData = true;
+                    console.warn(`[LinkedIn AI] ⚠️ Partial data for ${nameText || postID}: missing ${missingFields.join(', ')}`);
+                    warnings.push(`Partial data: ${postID} (missing ${missingFields.join(', ')})`);
+                }
+
+                // Only require at least ONE identifier (name OR profileId OR profileURL)
+                if (!nameText && !profileId && !profileURL) {
+                    console.warn(`[LinkedIn AI] ❌ Skipping post ${postID}: no identifiers found`);
+                    return;
+                }
+
+                matches.push(matchData);
 
             } catch (err) {
                 console.warn('[LinkedIn AI] Error extracting card:', err);
@@ -437,7 +655,22 @@
         }); // Close the forEach here
 
         const elapsed = Math.round(performance.now() - startTime);
-        onProgress?.(`✅ Found ${matches.length} VIP posts in ${elapsed}ms`);
+
+        // Count partial data matches
+        const partialMatches = matches.filter(m => m.partialData).length;
+
+        // Enhanced status message
+        let statusMsg = `✅ Found ${matches.length} VIP post${matches.length !== 1 ? 's' : ''} in ${elapsed}ms`;
+        if (partialMatches > 0) {
+            statusMsg += ` (${partialMatches} with partial data)`;
+        }
+        onProgress?.(statusMsg);
+
+        // Show warnings if any
+        if (warnings.length > 0) {
+            onProgress?.(`⚠️ ${warnings.length} warning${warnings.length !== 1 ? 's' : ''} - see console`);
+            console.warn('[LinkedIn AI] Warnings:', warnings);
+        }
 
         // Log summary for debugging
         if (matches.length === 0 && allCards.length > 0) {
@@ -445,8 +678,17 @@
             console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
         }
 
+        // Enhanced diagnostics
+        console.log(`[LinkedIn AI] Scrape complete: ${matches.length} matches, ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
+
         return {
-            meta: { totalCards: allCards.length, finalMatchCount: matches.length, elapsed: `${elapsed}ms`, warnings },
+            meta: {
+                totalCards: allCards.length,
+                finalMatchCount: matches.length,
+                partialDataCount: partialMatches,
+                elapsed: `${elapsed}ms`,
+                warnings
+            },
             matches
         };
     } // Close scrapeNotifications function
@@ -600,7 +842,13 @@
             }
 
             try {
-                const result = await scrapeNotifications(updateStatus);
+                // Wrap scrapeNotifications with retry logic (3 attempts, exponential backoff)
+                const result = await retryWithBackoff(async (attempt) => {
+                    if (attempt > 1) {
+                        updateStatus(`🔄 Retry attempt ${attempt}/3...`);
+                    }
+                    return await scrapeNotifications(updateStatus);
+                }, 3, 2000);
 
                 if (result.matches.length === 0) {
                     updateStatus('ℹ️ No new VIP posts found');
@@ -721,12 +969,24 @@
                 }, 2000);
 
             } catch (error) {
+                console.error('[LinkedIn AI] Scraper failed after retries:', error);
                 updateStatus(`❌ Error: ${error.message}`);
+
+                // Provide helpful recovery suggestions
+                if (error.message.includes('Container not found')) {
+                    updateStatus('💡 Tip: Make sure you\'re on linkedin.com/notifications');
+                } else if (error.message.includes('No cards found')) {
+                    updateStatus('💡 Tip: Try scrolling manually, then retry');
+                } else {
+                    updateStatus('💡 Tip: Refresh the page and try again');
+                }
+
                 setTimeout(() => {
                     statusOverlay.style.maxHeight = '0';
                     statusOverlay.style.opacity = '0';
+                    statusOverlay.style.padding = '0';
                     container.classList.remove('processing');
-                }, 3000);
+                }, 5000); // Longer timeout to read suggestions
             }
         }
 
