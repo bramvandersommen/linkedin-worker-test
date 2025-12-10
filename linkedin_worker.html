@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 10.2 - Fixed race condition in dedupe');
+    console.log('[Worker] Version 10.3 - Enhanced N8N error handling');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -927,12 +927,22 @@
       try {
         enrichedPosts = await response.json();
       } catch (jsonError) {
-        throw new Error('Invalid response from N8N (not valid JSON)');
+        // Try to get response text for better error message
+        const responseText = await response.text().catch(() => 'Unable to read response');
+        console.error('[Worker] N8N response parsing failed:', responseText.substring(0, 200));
+        throw new Error('Invalid response from N8N (not valid JSON). Check N8N error node configuration.');
       }
 
       // Check for error response from N8N
       if (enrichedPosts && enrichedPosts.success === false) {
-        throw new Error(enrichedPosts.message || 'N8N workflow error');
+        const errorMsg = enrichedPosts.message || 'N8N workflow error';
+        const errorCode = enrichedPosts.error || 'UNKNOWN_ERROR';
+        const errorDetails = enrichedPosts.details ? ` (Failed at: ${enrichedPosts.details})` : '';
+
+        console.error('[Worker] N8N workflow error:', { errorCode, errorMsg, details: enrichedPosts.details });
+
+        // Create user-friendly error message
+        throw new Error(`${errorMsg}${errorDetails}`);
       }
 
       // Check if we got posts back
@@ -1024,8 +1034,40 @@
         
       } catch (error) {
         updateProgress(0, 0, 0);
-        updateStatus(`❌ Error: ${error.message}`);
-        
+        console.error('[Worker] Processing error:', error);
+
+        // Parse error message for better display
+        const errorMsg = error.message || 'Unknown error occurred';
+        let displayErrorData = {
+          error: 'Processing Error',
+          message: errorMsg
+        };
+
+        // Customize error display based on error type
+        if (errorMsg.includes('No posts matched active VIPs')) {
+          displayErrorData = {
+            error: 'No VIP Matches',
+            message: 'None of the scraped posts matched VIPs in your Google Sheets.',
+            action: 'Check that: 1) VIP names/IDs match between scraper and Google Sheets, 2) VIPs are marked as "Active" in Google Sheets'
+          };
+        } else if (errorMsg.includes('Invalid response from N8N')) {
+          displayErrorData = {
+            error: 'N8N Configuration Error',
+            message: 'N8N error node is not returning valid JSON.',
+            action: 'Update your N8N error handler code node to return: { success: false, error: "...", message: "..." }'
+          };
+        } else if (errorMsg.includes('Failed at:')) {
+          const nodeName = errorMsg.match(/Failed at: (.+)\)/)?.[1];
+          displayErrorData = {
+            error: 'N8N Workflow Error',
+            message: errorMsg,
+            details: nodeName ? `Error occurred in N8N node: ${nodeName}` : null
+          };
+        }
+
+        updateStatus(`❌ ${displayErrorData.error}`);
+        displayError(displayErrorData);
+
         if (eventSource) {
           eventSource.postMessage({
             type: 'ERROR',
