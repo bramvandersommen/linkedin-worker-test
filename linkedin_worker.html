@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 10.3 - Enhanced N8N error handling');
+    console.log('[Worker] Version 10.4 - Fixed response debug logging');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -923,13 +923,17 @@
         throw new Error(`N8N returned ${response.status}: ${response.statusText}`);
       }
 
+      // Clone response so we can read it multiple times for debugging
+      const responseClone = response.clone();
+
       let enrichedPosts;
       try {
         enrichedPosts = await response.json();
       } catch (jsonError) {
-        // Try to get response text for better error message
-        const responseText = await response.text().catch(() => 'Unable to read response');
-        console.error('[Worker] N8N response parsing failed:', responseText.substring(0, 200));
+        // Read the cloned response as text for debugging
+        const responseText = await responseClone.text().catch(() => 'Unable to read response');
+        console.error('[Worker] N8N response parsing failed. Response text:', responseText.substring(0, 500));
+        console.error('[Worker] JSON parse error:', jsonError.message);
         throw new Error('Invalid response from N8N (not valid JSON). Check N8N error node configuration.');
       }
 
