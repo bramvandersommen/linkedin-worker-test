@@ -44,15 +44,24 @@ Stack: Tampermonkey scraper → GitHub Pages worker → N8N workflows → Google
 - **Automatic retry with exponential backoff (NEW)**
 - **Graceful degradation for partial data (NEW)**
 
-### ⚠️ Remaining Issues
+### ⚠️ Current Issues
+- 🔴 **N8N error response configuration** (IN PROGRESS - see `.claude/N8N_DEBUG.md`)
+  - N8N generates correct error JSON but worker receives empty response
+  - Need to configure "Respond to Webhook" node properly
 - Worker needs network resilience (retry logic for N8N calls)
-- N8N needs better error messaging
 - End-to-end testing needed
 
 ### ✅ Recently Fixed (2024-12-10)
+**Scraper (v3.1):**
 - ~~Scraper relies on exact DOM structure~~ → Pattern-based detection added
 - ~~No fallback strategies for profile extraction~~ → 6 strategies implemented
 - ~~Limited error recovery~~ → Retry logic with backoff added
+
+**Worker (v10.0-10.4):**
+- ~~postID vs POST_ID case mismatch~~ → v10.0: Normalized field access
+- ~~Preloaded drafts filtered out~~ → v10.1: Skip dedupe for preloaded
+- ~~Race condition (scraper faster than fetch)~~ → v10.2: Queue messages until ready
+- ~~Generic error messages~~ → v10.3-10.4: Enhanced error handling with actionable steps
 
 ## Security Implementation
 - ✅ CORS headers in N8N webhooks

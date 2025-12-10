@@ -106,9 +106,12 @@ async function scrapeWithRecovery(onProgress) {
 2. ✅ Multi-strategy profile extraction (COMPLETED 2024-12-10)
 3. ✅ Retry logic in scraper (COMPLETED 2024-12-10)
 4. ✅ Graceful degradation (COMPLETED 2024-12-10)
-5. ⚪ Worker network resilience (PENDING)
-6. ⚪ N8N error messaging (PENDING)
-7. ⚪ End-to-end testing (PENDING)
+5. ✅ Worker dedupe fix (COMPLETED 2024-12-10 - v10.0)
+6. ✅ Worker race condition fix (COMPLETED 2024-12-10 - v10.2)
+7. ✅ Worker error handling UI (COMPLETED 2024-12-10 - v10.3-10.4)
+8. 🔴 N8N error response configuration (IN PROGRESS)
+9. ⚪ Worker network resilience (PENDING)
+10. ⚪ End-to-end testing (PENDING)
 
 ## Recent Implementation (2024-12-10)
 - Added `findPostsByPattern()` for text-based card detection

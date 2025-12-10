@@ -1,6 +1,43 @@
 # Recent Changes Log
 
-## 2024-12-10: Self-Healing & Robustness Overhaul
+## 2024-12-10 (Evening): Worker Error Handling & N8N Debugging
+
+### Worker Enhancements (v10.3 → v10.4)
+- **v10.3:** Enhanced N8N error handling with user-friendly messages
+- **v10.4:** Fixed response debug logging (clone response for multiple reads)
+
+### Error Handling Improvements
+- Categorized error messages by type (NO_VIP_MATCHES, config errors, workflow errors)
+- Added actionable recovery steps in error UI
+- Better console logging with full response text
+- Structured error extraction from N8N responses
+
+### Current Issue (IN PROGRESS)
+**Problem:** N8N webhook returns correct JSON `[{"success": false, ...}]` but worker receives empty response body.
+
+**Symptoms:**
+- N8N logs show correct error response being generated
+- Worker console: "N8N response parsing failed. Response text: [empty]"
+- Error: "Unexpected end of JSON input"
+
+**Root Cause:** N8N "Respond to Webhook" node configuration issue - data exists but isn't being sent to HTTP response properly.
+
+**Tried:**
+- ✅ N8N Code Node: Returns `[{ json: errorResponse }]` format
+- ✅ Worker: Clone response for debug logging
+- ❌ Custom JSON response in webhook (same issue)
+
+**Next Steps (Tomorrow):**
+1. Configure webhook response to extract JSON from items array: `{{ $json }}`
+2. Test with curl/Postman to verify actual HTTP response
+3. May need to adjust N8N response body expression
+
+### Files Modified Today
+- `linkedin-scraper.js` - Self-healing enhancements
+- `linkedin_worker.html` - Dedupe fixes, race condition fix, error handling (v10.0-10.4)
+- `.claude/` - Project documentation
+
+## 2024-12-10 (Afternoon): Self-Healing & Robustness Overhaul
 
 ### Pattern-Based Detection
 - **NEW:** `findPostsByPattern()` - Walks DOM by text content instead of CSS selectors
