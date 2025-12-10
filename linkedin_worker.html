@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 10.1 - Fixed preloaded drafts display');
+    console.log('[Worker] Version 10.2 - Fixed race condition in dedupe');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -618,6 +618,10 @@
     let linkedInConnected = false;
     let allEnrichedPosts = [];
     const seenPostIds = new Set();
+
+    // Track if initial load is complete
+    let initialLoadComplete = false;
+    let queuedMessages = [];
 
     // Fake progress steps (only for NEW post processing)
     const FAKE_STEPS = [
@@ -870,10 +874,23 @@
         } else {
           updateStatus('Ready - No existing drafts');
         }
-        
+
       } catch (error) {
         console.error('[Worker] ❌ Failed to fetch existing posts:', error);
         updateStatus('⚠️ Could not load existing drafts');
+      } finally {
+        // Mark initial load as complete
+        initialLoadComplete = true;
+        console.log('[Worker] ✅ Initial load complete, seenPostIds contains', seenPostIds.size, 'IDs');
+
+        // Process any queued messages
+        if (queuedMessages.length > 0) {
+          console.log('[Worker] 📤 Processing', queuedMessages.length, 'queued message(s)');
+          for (const msg of queuedMessages) {
+            await processAllPosts(msg.posts, msg.source, msg.origin);
+          }
+          queuedMessages = [];
+        }
       }
     }
 
@@ -1021,13 +1038,20 @@
     // Message handler
     window.addEventListener('message', async (event) => {
       if (!ALLOWED_ORIGINS.includes(event.origin)) return;
-      
+
       if (event.data.type === 'VIP_QUEUE') {
         const posts = event.data.posts;
         updateConnectionStatus(true);
-        
+
         console.log('[Worker] Received VIP_QUEUE with', posts.length, 'posts');
-        
+
+        // Wait for initial load to complete before processing
+        if (!initialLoadComplete) {
+          console.log('[Worker] ⏳ Queueing posts until initial load completes...');
+          queuedMessages.push({ posts, source: event.source, origin: event.origin });
+          return;
+        }
+
         // Process through existing workflow (batching, fake progress, N8N, display)
         await processAllPosts(posts, event.source, event.origin);
       }
