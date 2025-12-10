@@ -554,7 +554,7 @@
   </div>
 
   <script>
-    console.log('[Worker] Version 10.0 - Fixed dedupe case sensitivity bug');
+    console.log('[Worker] Version 10.1 - Fixed preloaded drafts display');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -795,18 +795,27 @@
       }
       
       if (posts.length === 0) return;
-      
-      // Filter out duplicates
-      const uniquePosts = posts.filter(post => {
-        if (seenPostIds.has(post.POST_ID)) {
-          console.log('[Worker] ⏭️ Skipping duplicate:', post.POST_ID);
-          return false;
-        }
-        seenPostIds.add(post.POST_ID);
-        return true;
-      });
-      
-      console.log(`[Worker] Displaying ${uniquePosts.length} unique posts (filtered ${posts.length - uniquePosts.length} duplicates)`);
+
+      let uniquePosts;
+
+      // Skip duplicate filtering for preloaded drafts (we want to display all existing drafts)
+      if (isPreloaded) {
+        uniquePosts = posts;
+        console.log(`[Worker] Displaying ${uniquePosts.length} preloaded drafts (no duplicate filtering)`);
+      } else {
+        // Filter out duplicates for NEW posts from scraper
+        uniquePosts = posts.filter(post => {
+          const postId = post.POST_ID || post.postID;
+          if (seenPostIds.has(postId)) {
+            console.log('[Worker] ⏭️ Skipping duplicate:', postId);
+            return false;
+          }
+          seenPostIds.add(postId);
+          return true;
+        });
+
+        console.log(`[Worker] Displaying ${uniquePosts.length} unique posts (filtered ${posts.length - uniquePosts.length} duplicates)`);
+      }
       
       // Add new posts to display
       uniquePosts.forEach((post, index) => {
