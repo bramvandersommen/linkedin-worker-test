@@ -1,7 +1,7 @@
 # N8N Error Handling Debug Session
 
 **Date:** 2024-12-10
-**Status:** 🔴 IN PROGRESS
+**Status:** ✅ RESOLVED
 **Issue:** N8N webhook returns empty response body to worker
 
 ---
@@ -166,7 +166,39 @@ return [{ json: errorResponse }];
 
 ## 💡 Notes
 
-- Worker v10.4 is live on GitHub Pages
+- Worker v10.5 is live on GitHub Pages
 - Scraper self-healing (v3.1) working perfectly
 - Dedupe and race condition issues resolved
-- Only remaining issue: N8N error response configuration
+- N8N error response configuration issue RESOLVED
+
+---
+
+## ✅ RESOLUTION (Completed 2024-12-10)
+
+### Final Solution
+**N8N Workflow Changes:**
+1. Added IF node after "Lookup VIP Notes" node
+2. Condition: `{{ $json.success === false }}`
+3. Routes errors directly to "Respond to Webhook" (bypasses OpenAI)
+4. Kept "Respond to Webhook" in "allEntries" mode for consistency
+
+**Worker Changes (v10.5):**
+1. Extract error from N8N array wrapper: `if (Array.isArray(enrichedPosts) && enrichedPosts[0].success === false)`
+2. Created `showErrorBanner()` to preserve existing drafts (uses `insertAdjacentHTML`)
+3. Clone response for debug logging: `const responseClone = response.clone()`
+4. Added version display in UI (bottom right corner)
+
+### Result
+✅ Worker receives proper error JSON from N8N
+✅ User-friendly error messages with actionable steps
+✅ Existing drafts preserved when errors occur
+✅ Clear console logging for debugging
+✅ Version number visible for easier issue tracking
+
+### Error Flow (Final)
+1. N8N Error Trigger captures workflow errors ✅
+2. Code Node formats error response ✅
+3. IF node routes to webhook response ✅
+4. Worker receives and parses error JSON ✅
+5. Worker displays friendly error banner ✅
+6. Existing drafts remain visible ✅
