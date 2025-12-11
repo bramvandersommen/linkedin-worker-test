@@ -551,10 +551,15 @@
         <div class="empty-state-hint">Run the scraper on LinkedIn to get started</div>
       </div>
     </main>
+
+    <!-- Version Number -->
+    <div style="position: fixed; bottom: 10px; right: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted-foreground); opacity: 0.5; z-index: 1000;">
+      v10.5
+    </div>
   </div>
 
   <script>
-    console.log('[Worker] Version 10.4 - Fixed response debug logging');
+    console.log('[Worker] Version 10.5 - Handle N8N array wrapper for errors');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -932,9 +937,16 @@
       } catch (jsonError) {
         // Read the cloned response as text for debugging
         const responseText = await responseClone.text().catch(() => 'Unable to read response');
-        console.error('[Worker] N8N response parsing failed. Response text:', responseText.substring(0, 500));
+        console.error('[Worker] N8N response parsing failed. Response text:', responseText ? responseText.substring(0, 500) : 'Empty response');
         console.error('[Worker] JSON parse error:', jsonError.message);
         throw new Error('Invalid response from N8N (not valid JSON). Check N8N error node configuration.');
+      }
+
+      // Handle array wrapper from N8N "allEntries" mode
+      // If single error object wrapped in array, extract it
+      if (Array.isArray(enrichedPosts) && enrichedPosts.length === 1 && enrichedPosts[0].success === false) {
+        console.log('[Worker] Detected error response in array wrapper, extracting...');
+        enrichedPosts = enrichedPosts[0];
       }
 
       // Check for error response from N8N
@@ -1070,7 +1082,9 @@
         }
 
         updateStatus(`❌ ${displayErrorData.error}`);
-        displayError(displayErrorData);
+
+        // Show error banner WITHOUT clearing existing drafts
+        showErrorBanner(displayErrorData);
 
         if (eventSource) {
           eventSource.postMessage({
@@ -1105,21 +1119,21 @@
 
     function displayError(errorData) {
       const container = document.getElementById('resultsContainer');
-      
+
       // Update status text
       updateStatus(`❌ ${errorData.error || 'Error'}`, false);
-      
+
       let errorMessage = `
         <div style="padding: 2rem; background: rgba(255, 68, 68, 0.1); border: 2px solid rgba(255, 68, 68, 0.3); border-radius: var(--radius); text-align: center;">
           <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
           <h2 style="color: #ff4444; margin-bottom: 1rem; font-size: 1.5rem;">${errorData.error || 'Error'}</h2>
           <p style="font-size: 1.0625rem; margin: 1rem 0; color: var(--foreground);">${errorData.message}</p>
       `;
-      
+
       if (errorData.details) {
         errorMessage += `<p style="color: var(--muted-foreground); font-size: 0.9375rem; margin-top: 0.5rem;">${errorData.details}</p>`;
       }
-      
+
       if (errorData.action) {
         errorMessage += `
           <div style="background: rgba(215, 255, 86, 0.1); padding: 1rem; border-left: 3px solid var(--accent); border-radius: 8px; margin-top: 1.5rem; text-align: left;">
@@ -1128,10 +1142,50 @@
           </div>
         `;
       }
-      
+
       errorMessage += `</div>`;
-      
+
       container.innerHTML = errorMessage;
+    }
+
+    function showErrorBanner(errorData) {
+      const container = document.getElementById('resultsContainer');
+
+      // Remove any existing error banner
+      const existingBanner = document.getElementById('errorBanner');
+      if (existingBanner) existingBanner.remove();
+
+      // Create error banner (doesn't clear existing drafts)
+      let errorBanner = `
+        <div id="errorBanner" style="padding: 1.5rem; background: rgba(255, 68, 68, 0.1); border: 2px solid rgba(255, 68, 68, 0.3); border-radius: var(--radius); margin-bottom: 2rem; animation: slideUp 0.5s ease-out;">
+          <div style="display: flex; align-items: start; gap: 1rem;">
+            <div style="font-size: 2rem;">⚠️</div>
+            <div style="flex: 1;">
+              <h3 style="color: #ff4444; margin-bottom: 0.5rem; font-size: 1.25rem;">${errorData.error || 'Error'}</h3>
+              <p style="font-size: 1rem; margin: 0.5rem 0; color: var(--foreground);">${errorData.message}</p>
+      `;
+
+      if (errorData.details) {
+        errorBanner += `<p style="color: var(--muted-foreground); font-size: 0.875rem; margin-top: 0.5rem;">${errorData.details}</p>`;
+      }
+
+      if (errorData.action) {
+        errorBanner += `
+          <div style="background: rgba(215, 255, 86, 0.1); padding: 0.75rem; border-left: 3px solid var(--accent); border-radius: 8px; margin-top: 1rem;">
+            <strong style="color: var(--accent); font-size: 0.875rem;">Action needed:</strong>
+            <p style="margin-top: 0.5rem; color: var(--foreground); font-size: 0.875rem;">${errorData.action}</p>
+          </div>
+        `;
+      }
+
+      errorBanner += `
+            </div>
+          </div>
+        </div>
+      `;
+
+      // Insert banner at the top of container (before existing drafts)
+      container.insertAdjacentHTML('afterbegin', errorBanner);
     }
 
     // Check for query params (comment tracking mode)
