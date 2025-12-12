@@ -235,7 +235,18 @@
       transform: translateY(-3px);
       box-shadow: 0 8px 28px rgba(215, 255, 86, 0.08);
     }
-    
+
+    /* Slide-out animation for archiving/removing cards */
+    .result-card.sliding-out {
+      transform: translateX(-120%) scale(0.9) !important;
+      opacity: 0 !important;
+      filter: blur(6px) !important;
+      margin-top: -2rem !important;
+      margin-bottom: -2rem !important;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      pointer-events: none !important;
+    }
+
     @keyframes slideUp {
       from {
         opacity: 0;
@@ -324,19 +335,26 @@
       font-size: 0.9375rem;
       font-weight: 400;
       border-bottom: 2px solid transparent;
-      transition: all 0.2s ease-out;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       bottom: -1px;
     }
-    
+
     .draft-tab:hover {
       color: var(--foreground);
+      transform: translateY(-1px);
     }
-    
+
     .draft-tab.active {
       color: var(--accent);
       border-bottom-color: var(--accent);
       font-weight: 500;
+      animation: tabActivate 0.3s ease-out;
+    }
+
+    @keyframes tabActivate {
+      0% { opacity: 0.5; transform: translateY(2px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
     
     .draft-content {
@@ -460,7 +478,38 @@
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    
+
+    /* Micro-animation: Success pulse */
+    @keyframes successPulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    /* Micro-animation: Copy confirmation */
+    @keyframes copyConfirm {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.15); opacity: 0.8; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Micro-animation: Checkmark bounce */
+    @keyframes checkBounce {
+      0%, 100% { transform: scale(1) rotate(0deg); }
+      25% { transform: scale(1.2) rotate(-5deg); }
+      75% { transform: scale(1.1) rotate(5deg); }
+    }
+
+    /* Success state animation */
+    .archive-button.archived {
+      animation: successPulse 0.4s ease-out;
+    }
+
+    /* Copy button clicked state */
+    .cta-button.copied {
+      animation: copyConfirm 0.3s ease-out;
+    }
+
     /* Responsive */
     @media (max-width: 768px) {
       body {
@@ -581,21 +630,18 @@
     function removeCardWithAnimation(postId) {
       const card = document.querySelector(`[data-post-id="${postId}"]`);
       if (!card) return;
-      
-      // Smooth slide-out animation
-      card.style.transition = 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)';
-      card.style.transform = 'translateX(-100%) scale(0.95)';
-      card.style.opacity = '0';
-      card.style.filter = 'blur(4px)';
-      
+
+      // Trigger smooth slide-out animation with CSS class
+      card.classList.add('sliding-out');
+
       setTimeout(() => {
         card.remove();
-        
+
         // Update stats
         allEnrichedPosts = allEnrichedPosts.filter(p => p.POST_ID !== postId);
         seenPostIds.delete(postId);
         updateStats(allEnrichedPosts.length, skippedTotal, 0, allEnrichedPosts.length);
-        
+
         // Show empty state if no posts left
         if (allEnrichedPosts.length === 0) {
           document.getElementById('resultsContainer').innerHTML = `
@@ -606,7 +652,7 @@
             </div>
           `;
         }
-      }, 1000);
+      }, 650);
     }
 
     const N8N_WEBHOOK_BASE_URL = 'https://webhook-processor-production-84a9.up.railway.app/webhook/';
@@ -635,6 +681,168 @@
       { label: '✍️ Analyzing tone...', duration: 2000 },
       { label: '⚡ Generating drafts...', duration: 3000 }
     ];
+
+    // =============================================================================
+    // COMMENT TRACKING - Listen for comments posted on LinkedIn
+    // =============================================================================
+
+    window.addEventListener('message', async (event) => {
+      // Security: Only accept messages from LinkedIn
+      const isAllowed = ALLOWED_ORIGINS.some(origin =>
+        event.origin === origin || event.origin.startsWith(origin)
+      );
+
+      if (!isAllowed) {
+        console.warn('[Worker] Rejected message from:', event.origin);
+        return;
+      }
+
+      // Handle comment posted event
+      if (event.data.type === 'COMMENT_POSTED') {
+        console.log('[Worker] 📥 Comment posted!', event.data.data);
+
+        const commentData = event.data.data;
+
+        try {
+          // Send to N8N webhook
+          const response = await fetch(N8N_COMMENT_POSTED, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              postId: commentData.postID,
+              selectedDraft: commentData.selectedDraft,
+              originalDraft: commentData.originalDraft,
+              finalComment: commentData.finalComment,
+              commentedAt: commentData.timestamp
+            })
+          });
+
+          if (response.ok) {
+            console.log('[Worker] ✅ Comment tracked successfully');
+
+            // Remove card from UI
+            removeCommentedCard(commentData.postID);
+
+            // Show success notification
+            showSuccessNotification('Comment tracked! Card removed from queue.');
+
+          } else {
+            console.error('[Worker] ❌ Failed to track comment:', response.status);
+          }
+
+        } catch (error) {
+          console.error('[Worker] ❌ Error tracking comment:', error);
+        }
+      }
+    });
+
+    /**
+     * Remove card from UI after comment is posted
+     */
+    function removeCommentedCard(postID) {
+      const card = document.querySelector(`[data-post-id="${postID}"]`);
+
+      if (!card) {
+        console.warn('[Worker] Card not found for postID:', postID);
+        return;
+      }
+
+      // Add fade-out animation
+      card.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+      card.style.opacity = '0';
+      card.style.transform = 'translateX(20px)';
+
+      // Remove from DOM after animation
+      setTimeout(() => {
+        card.remove();
+        console.log('[Worker] 🗑️ Removed card:', postID);
+
+        // Check if results container is now empty
+        const resultsContainer = document.getElementById('resultsContainer');
+        if (resultsContainer && resultsContainer.children.length === 0) {
+          resultsContainer.innerHTML = `
+            <div style="text-align: center; padding: 60px 20px; color: var(--muted-foreground);">
+              <div style="font-size: 48px; margin-bottom: 20px;">✅</div>
+              <h2 style="color: var(--foreground); margin-bottom: 10px;">All caught up!</h2>
+              <p>No pending comments. Great work!</p>
+            </div>
+          `;
+        }
+      }, 300);
+    }
+
+    /**
+     * Show success notification toast
+     */
+    function showSuccessNotification(message) {
+      // Remove existing notification if any
+      const existing = document.getElementById('successToast');
+      if (existing) existing.remove();
+
+      // Create toast
+      const toast = document.createElement('div');
+      toast.id = 'successToast';
+      toast.innerHTML = `
+        <div style="
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
+          color: #1c1c1c;
+          padding: 16px 24px;
+          border-radius: 12px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-size: 14px;
+          font-weight: 600;
+          z-index: 10000;
+          animation: slideInRight 0.3s ease-out;
+        ">
+          ✅ ${message}
+        </div>
+      `;
+
+      // Add animation styles
+      if (!document.getElementById('toastStyles')) {
+        const styles = document.createElement('style');
+        styles.id = 'toastStyles';
+        styles.textContent = `
+          @keyframes slideInRight {
+            from {
+              transform: translateX(400px);
+              opacity: 0;
+            }
+            to {
+              transform: translateX(0);
+              opacity: 1;
+            }
+          }
+          @keyframes slideOutRight {
+            from {
+              transform: translateX(0);
+              opacity: 1;
+            }
+            to {
+              transform: translateX(400px);
+              opacity: 0;
+            }
+          }
+        `;
+        document.head.appendChild(styles);
+      }
+
+      document.body.appendChild(toast);
+
+      // Auto-dismiss after 3 seconds
+      setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease-out';
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+    }
+
+    console.log('[Worker] 👂 Listening for comment tracking messages...');
+
+    // =============================================================================
 
     function updateStatus(text, isProcessing = false) {
       const statusText = document.getElementById('statusText');
@@ -861,16 +1069,15 @@
         console.log(existingPosts);
         console.log('[Worker] Received', existingPosts.length, 'existing posts');
         
-        // Separate drafted (display) from commented (dedupe only)
+        // Separate drafted (display) from commented (skip)
         const draftedPosts = existingPosts.filter(p => p.STATUS === 'Drafted');
         const commentedPosts = existingPosts.filter(p => p.STATUS === 'Commented');
-        
-        // Add ALL post IDs to seenPostIds (for deduping) - both Drafted and Commented
-        draftedPosts.forEach(p => seenPostIds.add(p.POST_ID));
-        commentedPosts.forEach(p => seenPostIds.add(p.POST_ID));
 
-        console.log('[Worker] Drafted:', draftedPosts.length, 'Commented (for dedupe):', commentedPosts.length);
-        console.log('[Worker] seenPostIds initialized with', seenPostIds.size, 'unique IDs');
+        // NOTE: We no longer populate seenPostIds on initial load
+        // Each scraping session is independent - N8N handles deduplication via Google Sheets
+
+        console.log('[Worker] Drafted:', draftedPosts.length, 'posts to display');
+        console.log('[Worker] Commented:', commentedPosts.length, 'posts (tracked by N8N only)');
         
         // Display drafted posts
         if (draftedPosts.length > 0) {
@@ -886,7 +1093,7 @@
       } finally {
         // Mark initial load as complete
         initialLoadComplete = true;
-        console.log('[Worker] ✅ Initial load complete, seenPostIds contains', seenPostIds.size, 'IDs');
+        console.log('[Worker] ✅ Initial load complete. Ready to receive scraped posts.');
 
         // Process any queued messages
         if (queuedMessages.length > 0) {
@@ -943,10 +1150,16 @@
       }
 
       // Handle array wrapper from N8N "allEntries" mode
-      // If single error object wrapped in array, extract it
-      if (Array.isArray(enrichedPosts) && enrichedPosts.length === 1 && enrichedPosts[0].success === false) {
-        console.log('[Worker] Detected error response in array wrapper, extracting...');
-        enrichedPosts = enrichedPosts[0];
+      // If single object wrapped in array, extract it
+      if (Array.isArray(enrichedPosts) && enrichedPosts.length === 1) {
+        // Check if it's an error object
+        if (enrichedPosts[0].success === false) {
+          enrichedPosts = enrichedPosts[0];
+        }
+        // Check if it's a wrapper with posts property
+        else if (enrichedPosts[0].posts && Array.isArray(enrichedPosts[0].posts)) {
+          enrichedPosts = enrichedPosts[0].posts;
+        }
       }
 
       // Check for error response from N8N
@@ -965,7 +1178,20 @@
       if (!enrichedPosts || !Array.isArray(enrichedPosts) || enrichedPosts.length === 0) {
         throw new Error('No drafts generated by N8N');
       }
-      
+
+      // Normalize field names (handle both camelCase from scraper and UPPERCASE from N8N)
+      enrichedPosts = enrichedPosts.map(post => ({
+        POST_ID: post.POST_ID || post.postID,
+        VIP_NAME: post.VIP_NAME || post.nameOfVIP,
+        POST_CONTENTS: post.POST_CONTENTS || post.postContent,
+        ENRICHED_URL: post.ENRICHED_URL || post.urlToPost || post.enrichedUrl,
+        DRAFT_1: post.DRAFT_1 || post.draft1 || '',
+        DRAFT_2: post.DRAFT_2 || post.draft2 || '',
+        DRAFT_3: post.DRAFT_3 || post.draft3 || '',
+        PROFILE_URL: post.PROFILE_URL || post.profileURL || '',
+        VIP_RELATIONSHIP: post.VIP_RELATIONSHIP || post.vipRelationshipNotes || ''
+      }));
+
       displayResults(enrichedPosts);
       
       processedTotal += posts.length;
@@ -975,28 +1201,27 @@
     }
 
     async function processAllPosts(posts, eventSource, eventOrigin) {
-      console.log('[Worker] 🔍 Deduping', posts.length, 'incoming posts...');
+      console.log('[Worker] 🔍 Processing', posts.length, 'incoming posts from new scrape session...');
 
-      // Dedupe: filter out posts already in seenPostIds
-      // Handle both postID (from scraper) and POST_ID (from Google Sheets)
+      // OPTION C: Reset seenPostIds for new scraping session
+      // Only dedupe within this batch, not across sessions
+      // Let N8N/Google Sheets handle persistent deduplication
+      const batchSeenIds = new Set();
+
+      // Dedupe within this batch only (prevent duplicates in same scrape)
       const newPosts = posts.filter(post => {
         const postId = post.postID || post.POST_ID; // Normalize field name
-        if (seenPostIds.has(postId)) {
+        if (batchSeenIds.has(postId)) {
           skippedTotal++;
-          console.log('[Worker] ⏭️ Skipping already processed:', postId);
+          console.log('[Worker] ⏭️ Skipping duplicate in batch:', postId);
           return false;
         }
+        batchSeenIds.add(postId);
         return true;
       });
-      
-      // Add new post IDs to seenPostIds immediately to prevent reprocessing
-      newPosts.forEach(post => {
-        const postId = post.postID || post.POST_ID;
-        seenPostIds.add(postId);
-      });
 
-      console.log('[Worker] After dedupe:', newPosts.length, 'new,', skippedTotal, 'skipped');
-      console.log('[Worker] seenPostIds now contains', seenPostIds.size, 'unique IDs');
+      console.log('[Worker] After batch dedupe:', newPosts.length, 'unique posts in this batch');
+      console.log('[Worker] Note: N8N will check Google Sheets for previously processed posts');
 
       if (newPosts.length === 0) {
         updateStatus(`⏭️ All ${posts.length} posts already processed`);
@@ -1157,8 +1382,15 @@
 
       // Create error banner (doesn't clear existing drafts)
       let errorBanner = `
-        <div id="errorBanner" style="padding: 1.5rem; background: rgba(255, 68, 68, 0.1); border: 2px solid rgba(255, 68, 68, 0.3); border-radius: var(--radius); margin-bottom: 2rem; animation: slideUp 0.5s ease-out;">
-          <div style="display: flex; align-items: start; gap: 1rem;">
+        <div id="errorBanner" style="position: relative; padding: 1.5rem; background: rgba(255, 68, 68, 0.1); border: 2px solid rgba(255, 68, 68, 0.3); border-radius: var(--radius); margin-bottom: 2rem; animation: slideUp 0.5s ease-out; transition: opacity 0.3s ease-out, transform 0.3s ease-out;">
+          <button
+            onclick="dismissErrorBanner()"
+            style="position: absolute; top: 1rem; right: 1rem; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--muted-foreground); font-size: 1.125rem; line-height: 1; transition: all 0.2s ease-out; padding: 0;"
+            onmouseover="this.style.background='rgba(255, 255, 255, 0.15)'; this.style.borderColor='rgba(255, 255, 255, 0.3)'; this.style.color='var(--foreground)'"
+            onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'; this.style.borderColor='rgba(255, 255, 255, 0.2)'; this.style.color='var(--muted-foreground)'"
+            title="Dismiss error"
+          >×</button>
+          <div style="display: flex; align-items: start; gap: 1rem; padding-right: 2rem;">
             <div style="font-size: 2rem;">⚠️</div>
             <div style="flex: 1;">
               <h3 style="color: #ff4444; margin-bottom: 0.5rem; font-size: 1.25rem;">${errorData.error || 'Error'}</h3>
@@ -1187,6 +1419,20 @@
       // Insert banner at the top of container (before existing drafts)
       container.insertAdjacentHTML('afterbegin', errorBanner);
     }
+
+    function dismissErrorBanner() {
+      const banner = document.getElementById('errorBanner');
+      if (!banner) return;
+
+      // Smooth fade-out animation
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-10px)';
+
+      setTimeout(() => banner.remove(), 300);
+    }
+
+    // Expose to global scope for inline onclick
+    window.dismissErrorBanner = dismissErrorBanner;
 
     // Check for query params (comment tracking mode)
     const urlParams = new URLSearchParams(window.location.search);
@@ -1218,7 +1464,6 @@
       })
       .then(response => {
         if (response.ok) {
-          console.log('[Worker] ✅ Comment tracked successfully');
           updateStatus('✅ Comment tracked!');
           
           // Broadcast to other worker tabs

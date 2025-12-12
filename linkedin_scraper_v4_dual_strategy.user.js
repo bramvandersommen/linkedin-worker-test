@@ -1,10 +1,12 @@
 // ==UserScript==
-// @name         OffhoursAI LinkedIn AI Commenter
+// @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      3.1
-// @description  LinkedIn AI Post Commenter scraper with OffhoursAI branding.
+// @version      4.0
+// @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
 // @match        https://www.linkedin.com/notifications/*
 // @match        https://linkedin.com/notifications/*
+// @match        https://www.linkedin.com/search/results/content/*
+// @match        https://linkedin.com/search/results/content/*
 // @match        *://www.linkedin.com/feed/*
 // @require      https://bramvandersommen.github.io/linkedin-worker-test/vip-config.js
 // @run-at       document-end
@@ -37,12 +39,6 @@
         document.head.appendChild(style);
     }
 
-    /**
-     * LinkedIn AI Assistant - Unified Script
-     * Handles: Notifications scraping, Post comment injection, Comment tracking
-     * Version: 1.1.0 (Patched)
-     */
-
     // ═════════════════════════════════════════════════════════════════════════════
     // CONFIGURATION
     // ═════════════════════════════════════════════════════════════════════════════
@@ -64,24 +60,6 @@
         ]
     };
 
-    // Wait for config to load
-    /*const CONFIG = {
-        WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html',
-        N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
-        VIP_LIST: []
-    };
-
-    // Load VIPs from external config
-    if (window.LINKEDIN_AI_VIP_CONFIG) {
-        CONFIG.VIP_LIST = window.LINKEDIN_AI_VIP_CONFIG.vips;
-        console.log('[LinkedIn AI] Loaded', CONFIG.VIP_LIST.length, 'VIPs (version', window.LINKEDIN_AI_VIP_CONFIG.version + ')');
-    } else {
-        console.warn('[LinkedIn AI] VIP config not loaded, using fallback');
-        CONFIG.VIP_LIST = [
-            { name: 'Patrick Huijs', profileId: 'patrick-huijs' }
-        ];
-    }*/
-
     // ═════════════════════════════════════════════════════════════════════════════
     // PAGE DETECTION
     // ═════════════════════════════════════════════════════════════════════════════
@@ -90,6 +68,7 @@
         const path = window.location.pathname;
         const search = window.location.search;
 
+        if (path.includes('/search/results/content')) return 'VIP_SEARCH';
         if (path.includes('/notifications')) return 'NOTIFICATIONS';
         if (path.includes('/feed/update/') || search.includes('highlightedUpdateUrn')) return 'POST';
         return 'OTHER';
@@ -122,6 +101,61 @@
             return match ? match[1] : null;
         },
 
+        extractProfileId(url) {
+            if (!url) return null;
+            const match = url.match(/\/in\/([^/?]+)/);
+            return match ? decodeURIComponent(match[1]) : null;
+        },
+
+        cleanText(text) {
+            return text?.trim().replace(/\s+/g, ' ') || '';
+        },
+
+        convertHtmlToText(html) {
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
+
+            // Preserve paragraph spacing
+            temp.querySelectorAll('p').forEach((p, index) => {
+                // Add double newline after each paragraph (except inline handling)
+                if (p.nextSibling) {
+                    p.insertAdjacentText('afterend', '\n\n');
+                }
+            });
+
+            // Replace <br> with newlines BEFORE extracting text
+            temp.querySelectorAll('br').forEach(br => {
+                br.replaceWith('\n');
+            });
+
+            // Keep bold formatting with markdown-style **text**
+            temp.querySelectorAll('strong, b').forEach(el => {
+                el.replaceWith(`**${el.textContent}**`);
+            });
+
+            // Replace links but keep text content
+            temp.querySelectorAll('a').forEach(a => {
+                a.replaceWith(a.textContent);
+            });
+
+            // Get text content with preserved line breaks
+            let text = temp.textContent;
+
+            // Clean up HTML comments
+            text = text.replace(/<!--.*?-->/g, '');
+
+            // Preserve all intentional line breaks, only remove excessive spaces on same line
+            text = text
+                .split('\n')
+                .map(line => line.trim())  // Trim each line individually
+                .join('\n');               // Rejoin with newlines
+
+            // Remove leading/trailing blank lines only
+            text = text.replace(/^\n+/, '').replace(/\n+$/, '');
+
+            return text;
+        },
+
         async trackComment(data) {
             try {
                 await fetch(CONFIG.N8N_TRACKER_WEBHOOK, {
@@ -145,16 +179,16 @@
     };
 
     // ═════════════════════════════════════════════════════════════════════════════
-    // NOTIFICATIONS PAGE - SCRAPER + ENHANCED UI
+    // SCRAPER PAGES - VIP_SEARCH + NOTIFICATIONS
     // ═════════════════════════════════════════════════════════════════════════════
 
-    if (PAGE_TYPE === 'NOTIFICATIONS') {
+    if (PAGE_TYPE === 'VIP_SEARCH' || PAGE_TYPE === 'NOTIFICATIONS') {
 
         let workerWindow = null;
         let statusOverlay = null;
 
         // ───────────────────────────────────────────────────────────────────────────
-        // Particle Animation System (PATCH 1 APPLIED)
+        // Particle Animation System
         // ───────────────────────────────────────────────────────────────────────────
 
         let particles = [];
@@ -167,7 +201,6 @@
         function createParticles(container) {
             console.log('[LinkedIn AI] Creating particles in container:', container.id);
 
-            // Create or get the particle wrapper (behind button with z-index: -1)
             let wrapper = container.querySelector('.particle-wrapper');
             if (!wrapper) {
                 wrapper = document.createElement('div');
@@ -200,7 +233,7 @@
                     const particle = document.createElement('span');
                     particle.id = 'part-' + particlesID;
                     particle.className = 'particle';
-                    particle.textContent = '⚡︎'; // CRITICAL: Symbol ⚡︎ not emoji ⚡
+                    particle.textContent = '⚡︎';
                     particle.style.cssText = 'position:absolute;left:42px;top:42px;width:40px;height:40px;font-size:52px;color:#d4ff00;display:block;pointer-events:none;font-family:Arial;';
                     wrapper.appendChild(particle);
 
@@ -252,18 +285,12 @@
         // Self-Healing Helper Functions
         // ───────────────────────────────────────────────────────────────────────────
 
-        /**
-         * Multi-strategy profile extraction with graceful degradation
-         * Tries 6 different methods to extract profile data
-         */
         function extractProfileData(element) {
             const strategies = [
-                // Strategy 1: Standard profile link
                 (el) => {
                     const link = el.querySelector('a[href*="/in/"]');
                     if (link) return { url: link.getAttribute('href'), source: 'standard-link' };
                 },
-                // Strategy 2: Any link with /in/ in href (more permissive)
                 (el) => {
                     const links = el.querySelectorAll('a[href]');
                     for (const link of links) {
@@ -273,7 +300,6 @@
                         }
                     }
                 },
-                // Strategy 3: data-tracking-* attributes (LinkedIn often uses these)
                 (el) => {
                     const tracked = el.querySelector('[data-tracking-id*="profile"]');
                     if (tracked) {
@@ -281,7 +307,6 @@
                         return { url: `/in/${trackingId}`, source: 'tracking-id' };
                     }
                 },
-                // Strategy 4: Walk up DOM to find profile link in parent containers
                 (el) => {
                     let current = el;
                     for (let i = 0; i < 5; i++) {
@@ -291,14 +316,12 @@
                         if (link) return { url: link.getAttribute('href'), source: 'parent-walk' };
                     }
                 },
-                // Strategy 5: Text-based name extraction from strong/bold tags
                 (el) => {
                     const strong = el.querySelector('strong, b, .nt-card__headline strong');
                     if (strong && strong.textContent.trim()) {
                         return { name: strong.textContent.trim(), source: 'strong-tag' };
                     }
                 },
-                // Strategy 6: aria-label attributes (accessibility metadata)
                 (el) => {
                     const labeled = el.querySelector('[aria-label*="profile"], [aria-label*="Profile"]');
                     if (labeled) {
@@ -308,7 +331,6 @@
                 }
             ];
 
-            // Try each strategy
             for (const strategy of strategies) {
                 try {
                     const result = strategy(element);
@@ -317,22 +339,17 @@
                         return result;
                     }
                 } catch (err) {
-                    // Silently continue to next strategy
+                    // Continue to next strategy
                 }
             }
 
-            return { source: 'none' }; // Graceful failure
+            return { source: 'none' };
         }
 
-        /**
-         * Pattern-based post detection
-         * Finds notification cards by text content patterns, not CSS selectors
-         */
         function findPostsByPattern(container) {
             const postCards = [];
             const postPatterns = [/posted:/i, /shared this/i, /commented on this/i, /reposted this/i];
 
-            // Walk all text nodes to find post indicators
             const walker = document.createTreeWalker(
                 container,
                 NodeFilter.SHOW_TEXT,
@@ -346,14 +363,11 @@
             while (node = walker.nextNode()) {
                 const text = node.textContent.trim();
 
-                // Check if text matches any post pattern
                 if (postPatterns.some(pattern => pattern.test(text))) {
-                    // Walk up to find the card container
                     let current = node.parentElement;
                     let depth = 0;
 
                     while (current && depth < 10) {
-                        // Look for container attributes that suggest it's a card
                         if (current.hasAttribute('data-finite-scroll-hotkey-item') ||
                             current.classList.contains('nt-card') ||
                             current.tagName === 'ARTICLE' ||
@@ -374,9 +388,6 @@
             return postCards;
         }
 
-        /**
-         * Retry wrapper with exponential backoff
-         */
         async function retryWithBackoff(fn, maxAttempts = 3, baseDelay = 2000) {
             let lastError;
 
@@ -396,11 +407,7 @@
             throw lastError;
         }
 
-        /**
-         * Find notification container with pattern-based fallback
-         */
         function findNotificationContainer() {
-            // First try: Standard selectors
             const containerSelectors = [
                 '.scaffold-finite-scroll',
                 '[role="main"] .scaffold-finite-scroll',
@@ -416,8 +423,6 @@
                 }
             }
 
-            // Fallback: Find by text patterns
-            // Look for elements containing multiple "posted:" occurrences
             const allElements = document.querySelectorAll('[role="main"] *, main *');
             let bestCandidate = null;
             let maxMatches = 0;
@@ -441,32 +446,63 @@
         }
 
         // ───────────────────────────────────────────────────────────────────────────
-        // Scraper Logic
+        // VIP SEARCH RESULTS SCRAPER (NEW - PRIMARY STRATEGY)
         // ───────────────────────────────────────────────────────────────────────────
 
-        async function scrapeNotifications(onProgress) {
+        async function scrapeVIPSearchResults(onProgress) {
             const startTime = performance.now();
             const matches = [];
             const seenPostIDs = new Set();
             const warnings = [];
 
-            onProgress?.('🔍 Starting scraper...');
+            onProgress?.('🎯 Scanning VIP search results...');
 
-            // Use self-healing container finder
-            const parent = findNotificationContainer();
+            // Find container with multiple fallback strategies
+            const containerStrategies = [
+                () => document.querySelector('.search-results-container'),
+                () => document.querySelector('.scaffold-finite-scroll__content'),
+                () => document.querySelector('[class*="search-results"]'),
+                () => {
+                    const elements = document.querySelectorAll('[class*="scroll"]');
+                    return Array.from(elements).find(el =>
+                        el.querySelectorAll('.feed-shared-update-v2').length > 0
+                    );
+                }
+            ];
 
-            if (!parent) {
-                onProgress?.('❌ Notification container not found (tried selectors + patterns)');
+            let container = null;
+            for (const strategy of containerStrategies) {
+                try {
+                    container = strategy();
+                    if (container) {
+                        console.log('[LinkedIn AI] VIP Search container found');
+                        break;
+                    }
+                } catch (err) {
+                    continue;
+                }
+            }
+
+            if (!container) {
+                onProgress?.('❌ VIP search container not found');
                 warnings.push('Container not found');
                 return { meta: { warnings, elapsed: 0 }, matches: [] };
             }
 
-            for (let round = 1; round <= 5; round++) {
-                onProgress?.(`📜 Round ${round}/5: Scrolling...`);
+            // Scroll to load all posts (infinite scroll handling)
+            onProgress?.('📜 Loading all posts...');
 
+            let previousHeight = 0;
+            let stableCount = 0;
+            const maxRounds = 10;
+
+            for (let round = 1; round <= maxRounds; round++) {
+                onProgress?.(`📜 Round ${round}/${maxRounds}: Scrolling...`);
+
+                // Smooth scroll to bottom
                 const start = window.scrollY;
                 const end = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
-                const duration = 180; // Slightly faster: 200ms → 180ms
+                const duration = 200;
                 const startT = performance.now();
 
                 await new Promise(resolve => {
@@ -480,7 +516,321 @@
                     requestAnimationFrame(animate);
                 });
 
-                await Utils.randomPause(600, 1200); // Slightly faster: 800-1500ms → 600-1200ms
+                // Wait for content to load
+                await Utils.randomPause(800, 1200);
+
+                // Check if page height changed
+                const currentHeight = document.body.scrollHeight;
+                if (currentHeight === previousHeight) {
+                    stableCount++;
+                    if (stableCount >= 2) {
+                        onProgress?.(`✓ All content loaded (round ${round})`);
+                        break;
+                    }
+                } else {
+                    stableCount = 0;
+                    previousHeight = currentHeight;
+                }
+
+                if (round === maxRounds) {
+                    onProgress?.('✓ Reached max scroll depth');
+                }
+            }
+
+            // Scroll back to top
+            onProgress?.('📍 Scrolling to top...');
+            await new Promise(resolve => {
+                const startY = window.scrollY;
+                const duration = 300;
+                const startTime = performance.now();
+
+                function animate(now) {
+                    const progress = Math.min((now - startTime) / duration, 1);
+                    const ease = 1 - Math.pow(1 - progress, 3);
+                    window.scrollTo(0, startY * (1 - ease));
+
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        resolve();
+                    }
+                }
+                requestAnimationFrame(animate);
+            });
+
+            // Find post cards
+            onProgress?.('📋 Finding posts...');
+            const cardStrategies = [
+                () => container.querySelectorAll('.feed-shared-update-v2'),
+                () => container.querySelectorAll('[data-urn*="activity"]'),
+                () => {
+                    const ul = container.querySelector('ul[role="list"]');
+                    return ul ? ul.querySelectorAll('li') : [];
+                }
+            ];
+
+            let allCards = [];
+            for (const strategy of cardStrategies) {
+                try {
+                    allCards = Array.from(strategy());
+                    if (allCards.length > 0) {
+                        console.log(`[LinkedIn AI] Found ${allCards.length} post cards`);
+                        break;
+                    }
+                } catch (err) {
+                    continue;
+                }
+            }
+
+            if (allCards.length === 0) {
+                onProgress?.('⚠️ No post cards found');
+                warnings.push('No cards found');
+                return { meta: { warnings, elapsed: 0 }, matches: [] };
+            }
+
+            onProgress?.(`🔎 Extracting ${allCards.length} posts...`);
+
+            allCards.forEach((card) => {
+                try {
+                    // Extract post ID
+                    let postID = null;
+                    const idStrategies = [
+                        () => {
+                            const feedCard = card.querySelector('.feed-shared-update-v2') || card;
+                            const urn = feedCard.getAttribute('data-urn');
+                            if (urn) {
+                                const match = urn.match(/activity:(\d+)/);
+                                return match ? match[1] : null;
+                            }
+                        },
+                        () => {
+                            const link = card.querySelector('a[href*="activity"]');
+                            return link ? Utils.extractPostID(link.href) : null;
+                        }
+                    ];
+
+                    for (const strategy of idStrategies) {
+                        try {
+                            postID = strategy();
+                            if (postID) break;
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+
+                    if (!postID || seenPostIDs.has(postID)) return;
+                    seenPostIDs.add(postID);
+
+                    // Extract author name
+                    let nameText = '';
+                    const nameStrategies = [
+                        () => {
+                            // Try to get just the name span, not all nested content
+                            const titleDiv = card.querySelector('.update-components-actor__title');
+                            if (titleDiv) {
+                                const nameSpan = titleDiv.querySelector('span[aria-hidden="true"]') ||
+                                                titleDiv.querySelector('span:first-child');
+                                if (nameSpan) return nameSpan.textContent.trim();
+                                // Fallback: get first line only
+                                const fullText = titleDiv.textContent.trim();
+                                return fullText.split('\n')[0].trim();
+                            }
+                        },
+                        () => card.querySelector('.update-components-actor__name')?.textContent.trim(),
+                        () => card.querySelector('[data-attributed-id*="profile"]')?.textContent.trim(),
+                        () => {
+                            const strong = card.querySelector('strong');
+                            return strong?.textContent.trim();
+                        }
+                    ];
+
+                    for (const strategy of nameStrategies) {
+                        try {
+                            nameText = strategy();
+                            if (nameText) {
+                                // Clean up any remaining duplicates or whitespace
+                                nameText = nameText.replace(/\s+/g, ' ').trim();
+                                // Remove duplicate names (e.g., "Patrick HuijsPatrick Huijs" -> "Patrick Huijs")
+                                const words = nameText.split(' ');
+                                if (words.length >= 4) {
+                                    const firstHalf = words.slice(0, words.length / 2).join(' ');
+                                    const secondHalf = words.slice(words.length / 2).join(' ');
+                                    if (firstHalf === secondHalf) {
+                                        nameText = firstHalf;
+                                    }
+                                }
+                                break;
+                            }
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+
+                    // Extract profile URL
+                    let profileURL = '';
+                    const urlStrategies = [
+                        () => {
+                            const actorContainer = card.querySelector('.update-components-actor__container');
+                            const link = actorContainer?.querySelector('a[href*="/in/"]');
+                            return link?.getAttribute('href') || '';
+                        },
+                        () => {
+                            const link = card.querySelector('a[href*="/in/"]');
+                            return link?.getAttribute('href') || '';
+                        }
+                    ];
+
+                    for (const strategy of urlStrategies) {
+                        try {
+                            profileURL = strategy();
+                            if (profileURL) break;
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+
+                    const profileId = Utils.extractProfileId(profileURL);
+
+                    // No VIP matching needed - search page is already filtered by fromMember parameter
+                    // N8N will handle relationship notes lookup via profileId
+
+                    // Extract post content with HTML preservation
+                    let postContent = '';
+                    const contentStrategies = [
+                        () => {
+                            const contentDiv = card.querySelector('.update-components-text .break-words > span[dir="ltr"]');
+                            if (contentDiv) {
+                                return Utils.convertHtmlToText(contentDiv.innerHTML);
+                            }
+                        },
+                        () => {
+                            const contentDiv = card.querySelector('.feed-shared-text');
+                            return contentDiv?.textContent.trim() || '';
+                        },
+                        () => {
+                            const contentDiv = card.querySelector('[data-test-id="main-feed-activity-card__commentary"]');
+                            return contentDiv?.textContent.trim() || '';
+                        }
+                    ];
+
+                    for (const strategy of contentStrategies) {
+                        try {
+                            postContent = strategy();
+                            if (postContent) break;
+                        } catch (err) {
+                            continue;
+                        }
+                    }
+
+                    // Build post URL
+                    const urlToPost = profileURL && postID ?
+                        `https://www.linkedin.com/feed/update/urn:li:activity:${postID}` :
+                        '';
+
+                    const matchData = {
+                        postID,
+                        nameOfVIP: nameText,
+                        profileURL: profileURL.startsWith('http') ? profileURL : (profileURL ? `https://www.linkedin.com${profileURL}` : ''),
+                        profileId: profileId || '',
+                        urlToPost,
+                        postContent,
+                        cardElement: card,
+                        partialData: false
+                    };
+
+                    const missingFields = [];
+                    if (!profileId) missingFields.push('profileId');
+                    if (!profileURL) missingFields.push('profileURL');
+                    if (!nameText) missingFields.push('name');
+                    if (!postContent) missingFields.push('content');
+
+                    if (missingFields.length > 0) {
+                        matchData.partialData = true;
+                        console.warn(`[LinkedIn AI] ⚠️ Partial data for ${nameText || postID}: missing ${missingFields.join(', ')}`);
+                        warnings.push(`Partial data: ${postID} (missing ${missingFields.join(', ')})`);
+                    }
+
+                    if (!nameText && !profileId && !profileURL) {
+                        console.warn(`[LinkedIn AI] ❌ Skipping post ${postID}: no identifiers found`);
+                        return;
+                    }
+
+                    matches.push(matchData);
+
+                } catch (err) {
+                    console.warn('[LinkedIn AI] Error extracting card:', err);
+                }
+            });
+
+            const elapsed = Math.round(performance.now() - startTime);
+            const partialMatches = matches.filter(m => m.partialData).length;
+
+            let statusMsg = `✅ Found ${matches.length} VIP post${matches.length !== 1 ? 's' : ''} in ${elapsed}ms`;
+            if (partialMatches > 0) {
+                statusMsg += ` (${partialMatches} with partial data)`;
+            }
+            onProgress?.(statusMsg);
+
+            if (warnings.length > 0) {
+                onProgress?.(`⚠️ ${warnings.length} warning${warnings.length !== 1 ? 's' : ''} - see console`);
+                console.warn('[LinkedIn AI] Warnings:', warnings);
+            }
+
+            console.log(`[LinkedIn AI] VIP Search scrape complete: ${matches.length} matches, ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
+
+            return {
+                meta: {
+                    totalCards: allCards.length,
+                    finalMatchCount: matches.length,
+                    partialDataCount: partialMatches,
+                    elapsed: `${elapsed}ms`,
+                    warnings,
+                    strategy: 'VIP_SEARCH'
+                },
+                matches
+            };
+        }
+
+        // ───────────────────────────────────────────────────────────────────────────
+        // NOTIFICATIONS SCRAPER (FALLBACK STRATEGY)
+        // ───────────────────────────────────────────────────────────────────────────
+
+        async function scrapeNotifications(onProgress) {
+            const startTime = performance.now();
+            const matches = [];
+            const seenPostIDs = new Set();
+            const warnings = [];
+
+            onProgress?.('🔍 Starting notifications scraper...');
+
+            const parent = findNotificationContainer();
+
+            if (!parent) {
+                onProgress?.('❌ Notification container not found (tried selectors + patterns)');
+                warnings.push('Container not found');
+                return { meta: { warnings, elapsed: 0, strategy: 'NOTIFICATIONS' }, matches: [] };
+            }
+
+            for (let round = 1; round <= 5; round++) {
+                onProgress?.(`📜 Round ${round}/5: Scrolling...`);
+
+                const start = window.scrollY;
+                const end = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
+                const duration = 180;
+                const startT = performance.now();
+
+                await new Promise(resolve => {
+                    function animate(now) {
+                        const progress = Math.min((now - startT) / duration, 1);
+                        const ease = 1 - Math.pow(1 - progress, 3);
+                        window.scrollTo(0, start + (end - start) * ease);
+                        if (progress < 1) requestAnimationFrame(animate);
+                        else resolve();
+                    }
+                    requestAnimationFrame(animate);
+                });
+
+                await Utils.randomPause(600, 1200);
 
                 const showMoreBtn = parent.querySelector('button.scaffold-finite-scroll__load-button');
                 if (showMoreBtn && !showMoreBtn.disabled && showMoreBtn.offsetParent !== null) {
@@ -488,7 +838,6 @@
                     showMoreBtn.click();
                     await Utils.randomPause(800, 1400);
                 } else if (round > 2) {
-                    // Early exit: If no "Show more" button after round 2, stop scrolling
                     onProgress?.(`✓ No more content to load (round ${round})`);
                     break;
                 }
@@ -496,7 +845,6 @@
 
             onProgress?.('🔎 Extracting VIP posts...');
 
-            // Self-healing: Try selectors first, then pattern-based detection
             const cardSelectors = [
                 '[data-finite-scroll-hotkey-item]',
                 '.nt-card',
@@ -513,7 +861,6 @@
                 }
             }
 
-            // Fallback: Pattern-based detection if selectors failed
             if (allCards.length === 0) {
                 onProgress?.('⚠️ Selectors failed, trying pattern-based detection...');
                 allCards = findPostsByPattern(parent);
@@ -527,171 +874,180 @@
             }
 
             allCards.forEach((card) => {
-            try {
-                // Use multi-strategy profile extraction
-                const profileData = extractProfileData(card);
+                try {
+                    const profileData = extractProfileData(card);
 
-                let profileURL = profileData.url || '';
-                let profileId = '';
-                let nameText = profileData.name || '';
+                    let profileURL = profileData.url || '';
+                    let profileId = '';
+                    let nameText = profileData.name || '';
 
-                // Extract profile ID from URL if available
-                if (profileURL) {
-                    const profileIdMatch = profileURL.match(/\/in\/([^\/\?]+)/);
-                    profileId = profileIdMatch ? decodeURIComponent(profileIdMatch[1]) : '';
-                }
-
-                // Additional fallback: Try standard name extraction if not found yet
-                if (!nameText) {
-                    const strongTag = card.querySelector('.nt-card__headline strong, strong, b');
-                    nameText = strongTag?.textContent.trim() || '';
-                }
-
-                const headlineSpan = card.querySelector('.nt-card__headline span.nt-card__text--3-line');
-                const fullHeadline = headlineSpan?.textContent.trim() || '';
-
-                const postLink = card.querySelector('.nt-card__headline[href*="highlightedUpdateUrn"]');
-                const postURL = postLink?.getAttribute('href') || '';
-
-                // ENHANCED VIP MATCHING with fallback cascade
-                let matchedVIP = null;
-                let matchMethod = '';
-
-                const isVIP = CONFIG.VIP_LIST.some(vip => {
-                    // If VIP list loaded from external config
-                    if (typeof vip === 'object') {
-                        // Priority 1: Match by profile ID
-                        if (profileId && vip.profileId) {
-                            if (profileId.toLowerCase() === vip.profileId.toLowerCase()) {
-                                matchedVIP = vip;
-                                matchMethod = 'profileId';
-                                return true;
-                            }
-                        }
-
-                        // Priority 2: Match by profile URL
-                        if (profileURL && vip.profileUrl) {
-                            if (Utils.normalizeURL(profileURL) === Utils.normalizeURL(vip.profileUrl)) {
-                                matchedVIP = vip;
-                                matchMethod = 'profileUrl';
-                                return true;
-                            }
-                        }
-
-                        // Priority 3: Match by name (fuzzy)
-                        if (nameText && vip.name) {
-                            if (Utils.normalizeName(nameText) === Utils.normalizeName(vip.name)) {
-                                matchedVIP = vip;
-                                matchMethod = 'name';
-                                return true;
-                            }
-                        }
-
-                        return false;
+                    if (profileURL) {
+                        const profileIdMatch = profileURL.match(/\/in\/([^\/\?]+)/);
+                        profileId = profileIdMatch ? decodeURIComponent(profileIdMatch[1]) : '';
                     }
 
-                    // Legacy: String-based VIP list (backward compatible)
-                    const vipStr = String(vip);
-                    if (vipStr.includes('/')) {
-                        return Utils.normalizeURL(vipStr) === Utils.normalizeURL(profileURL);
-                    } else {
-                        return Utils.normalizeName(vipStr) === Utils.normalizeName(nameText);
+                    if (!nameText) {
+                        const strongTag = card.querySelector('.nt-card__headline strong, strong, b');
+                        nameText = strongTag?.textContent.trim() || '';
                     }
-                });
 
-                if (!isVIP) return;
+                    const headlineSpan = card.querySelector('.nt-card__headline span.nt-card__text--3-line');
+                    const fullHeadline = headlineSpan?.textContent.trim() || '';
 
-                // Log match method for debugging
-                if (matchMethod) {
-                    console.log(`[LinkedIn AI] ✓ Matched VIP via ${matchMethod}:`, nameText);
+                    const postLink = card.querySelector('.nt-card__headline[href*="highlightedUpdateUrn"]');
+                    const postURL = postLink?.getAttribute('href') || '';
+
+                    let matchedVIP = null;
+                    let matchMethod = '';
+
+                    const isVIP = CONFIG.VIP_LIST.some(vip => {
+                        if (typeof vip === 'object') {
+                            if (profileId && vip.profileId) {
+                                if (profileId.toLowerCase() === vip.profileId.toLowerCase()) {
+                                    matchedVIP = vip;
+                                    matchMethod = 'profileId';
+                                    return true;
+                                }
+                            }
+
+                            if (profileURL && vip.profileUrl) {
+                                if (Utils.normalizeURL(profileURL) === Utils.normalizeURL(vip.profileUrl)) {
+                                    matchedVIP = vip;
+                                    matchMethod = 'profileUrl';
+                                    return true;
+                                }
+                            }
+
+                            if (nameText && vip.name) {
+                                if (Utils.normalizeName(nameText) === Utils.normalizeName(vip.name)) {
+                                    matchedVIP = vip;
+                                    matchMethod = 'name';
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        }
+
+                        const vipStr = String(vip);
+                        if (vipStr.includes('/')) {
+                            return Utils.normalizeURL(vipStr) === Utils.normalizeURL(profileURL);
+                        } else {
+                            return Utils.normalizeName(vipStr) === Utils.normalizeName(nameText);
+                        }
+                    });
+
+                    if (!isVIP) return;
+
+                    if (matchMethod) {
+                        console.log(`[LinkedIn AI] ✓ Matched VIP via ${matchMethod}:`, nameText);
+                    }
+
+                    if (!/posted:/i.test(fullHeadline)) return;
+
+                    const postID = Utils.extractPostID(postURL);
+                    if (!postID || seenPostIDs.has(postID)) return;
+
+                    seenPostIDs.add(postID);
+
+                    const contentMatch = fullHeadline.match(/posted:\s*(.+)$/is);
+                    const postContent = contentMatch ? contentMatch[1].trim() : fullHeadline;
+
+                    const matchData = {
+                        postID,
+                        nameOfVIP: nameText,
+                        profileURL: profileURL.startsWith('http') ? profileURL : (profileURL ? `https://www.linkedin.com${profileURL}` : ''),
+                        profileId: profileId || '',
+                        urlToPost: postURL.startsWith('http') ? postURL : `https://www.linkedin.com${postURL}`,
+                        postContent,
+                        cardElement: card,
+                        partialData: false
+                    };
+
+                    const missingFields = [];
+                    if (!profileId) missingFields.push('profileId');
+                    if (!profileURL) missingFields.push('profileURL');
+                    if (!nameText) missingFields.push('name');
+
+                    if (missingFields.length > 0) {
+                        matchData.partialData = true;
+                        console.warn(`[LinkedIn AI] ⚠️ Partial data for ${nameText || postID}: missing ${missingFields.join(', ')}`);
+                        warnings.push(`Partial data: ${postID} (missing ${missingFields.join(', ')})`);
+                    }
+
+                    if (!nameText && !profileId && !profileURL) {
+                        console.warn(`[LinkedIn AI] ❌ Skipping post ${postID}: no identifiers found`);
+                        return;
+                    }
+
+                    matches.push(matchData);
+
+                } catch (err) {
+                    console.warn('[LinkedIn AI] Error extracting card:', err);
                 }
+            });
 
-                if (!/posted:/i.test(fullHeadline)) return;
+            const elapsed = Math.round(performance.now() - startTime);
+            const partialMatches = matches.filter(m => m.partialData).length;
 
-                const postID = Utils.extractPostID(postURL);
-                if (!postID || seenPostIDs.has(postID)) return;
-
-                seenPostIDs.add(postID);
-
-                const contentMatch = fullHeadline.match(/posted:\s*(.+)$/is);
-                const postContent = contentMatch ? contentMatch[1].trim() : fullHeadline;
-
-                // Graceful degradation: Accept partial data with warnings
-                const matchData = {
-                    postID,
-                    nameOfVIP: nameText,
-                    profileURL: profileURL.startsWith('http') ? profileURL : (profileURL ? `https://www.linkedin.com${profileURL}` : ''),
-                    profileId: profileId || '',
-                    urlToPost: postURL.startsWith('http') ? postURL : `https://www.linkedin.com${postURL}`,
-                    postContent,
-                    cardElement: card,
-                    partialData: false // Track if data is incomplete
-                };
-
-                // Track what data we're missing
-                const missingFields = [];
-                if (!profileId) missingFields.push('profileId');
-                if (!profileURL) missingFields.push('profileURL');
-                if (!nameText) missingFields.push('name');
-
-                if (missingFields.length > 0) {
-                    matchData.partialData = true;
-                    console.warn(`[LinkedIn AI] ⚠️ Partial data for ${nameText || postID}: missing ${missingFields.join(', ')}`);
-                    warnings.push(`Partial data: ${postID} (missing ${missingFields.join(', ')})`);
-                }
-
-                // Only require at least ONE identifier (name OR profileId OR profileURL)
-                if (!nameText && !profileId && !profileURL) {
-                    console.warn(`[LinkedIn AI] ❌ Skipping post ${postID}: no identifiers found`);
-                    return;
-                }
-
-                matches.push(matchData);
-
-            } catch (err) {
-                console.warn('[LinkedIn AI] Error extracting card:', err);
-                // Continue processing other cards even if one fails
+            let statusMsg = `✅ Found ${matches.length} VIP post${matches.length !== 1 ? 's' : ''} in ${elapsed}ms`;
+            if (partialMatches > 0) {
+                statusMsg += ` (${partialMatches} with partial data)`;
             }
-        }); // Close the forEach here
+            onProgress?.(statusMsg);
 
-        const elapsed = Math.round(performance.now() - startTime);
+            if (warnings.length > 0) {
+                onProgress?.(`⚠️ ${warnings.length} warning${warnings.length !== 1 ? 's' : ''} - see console`);
+                console.warn('[LinkedIn AI] Warnings:', warnings);
+            }
 
-        // Count partial data matches
-        const partialMatches = matches.filter(m => m.partialData).length;
+            if (matches.length === 0 && allCards.length > 0) {
+                console.warn('[LinkedIn AI] No VIP matches found. Checked', allCards.length, 'cards against', CONFIG.VIP_LIST.length, 'VIPs');
+                console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
+            }
 
-        // Enhanced status message
-        let statusMsg = `✅ Found ${matches.length} VIP post${matches.length !== 1 ? 's' : ''} in ${elapsed}ms`;
-        if (partialMatches > 0) {
-            statusMsg += ` (${partialMatches} with partial data)`;
+            console.log(`[LinkedIn AI] Notifications scrape complete: ${matches.length} matches, ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
+
+            return {
+                meta: {
+                    totalCards: allCards.length,
+                    finalMatchCount: matches.length,
+                    partialDataCount: partialMatches,
+                    elapsed: `${elapsed}ms`,
+                    warnings,
+                    strategy: 'NOTIFICATIONS'
+                },
+                matches
+            };
         }
-        onProgress?.(statusMsg);
 
-        // Show warnings if any
-        if (warnings.length > 0) {
-            onProgress?.(`⚠️ ${warnings.length} warning${warnings.length !== 1 ? 's' : ''} - see console`);
-            console.warn('[LinkedIn AI] Warnings:', warnings);
+        // ───────────────────────────────────────────────────────────────────────────
+        // DUAL STRATEGY ORCHESTRATOR
+        // ───────────────────────────────────────────────────────────────────────────
+
+        async function scrapeWithStrategy(onProgress) {
+            if (PAGE_TYPE === 'VIP_SEARCH') {
+                onProgress?.('🎯 Using VIP Search Results strategy...');
+                try {
+                    const result = await scrapeVIPSearchResults(onProgress);
+                    if (result.matches.length > 0) {
+                        return result;
+                    }
+                    // If no matches, throw to trigger fallback
+                    throw new Error('No VIP posts found in search results');
+                } catch (err) {
+                    console.warn('[LinkedIn AI] VIP Search strategy failed:', err.message);
+                    onProgress?.('⚠️ VIP Search failed, trying Notifications fallback...');
+                    // Try notifications as fallback (user might be on wrong page)
+                    return await scrapeNotifications(onProgress);
+                }
+            } else if (PAGE_TYPE === 'NOTIFICATIONS') {
+                onProgress?.('📬 Using Notifications strategy...');
+                return await scrapeNotifications(onProgress);
+            } else {
+                throw new Error('Unsupported page type');
+            }
         }
-
-        // Log summary for debugging
-        if (matches.length === 0 && allCards.length > 0) {
-            console.warn('[LinkedIn AI] No VIP matches found. Checked', allCards.length, 'cards against', CONFIG.VIP_LIST.length, 'VIPs');
-            console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
-        }
-
-        // Enhanced diagnostics
-        console.log(`[LinkedIn AI] Scrape complete: ${matches.length} matches, ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
-
-        return {
-            meta: {
-                totalCards: allCards.length,
-                finalMatchCount: matches.length,
-                partialDataCount: partialMatches,
-                elapsed: `${elapsed}ms`,
-                warnings
-            },
-            matches
-        };
-    } // Close scrapeNotifications function
 
         // ───────────────────────────────────────────────────────────────────────────
         // Enhanced FAB Button
@@ -766,14 +1122,12 @@
                 btnFront.style.transform = 'none';
             });
 
-            // :active state - on press
             container.addEventListener('mousedown', () => {
                 if (container.classList.contains('processing')) return;
                 btnBack.style.transform = 'translateZ(20px) rotateZ(5deg) rotateX(-20deg) rotateY(-5deg)';
                 btnFront.style.transform = 'translateZ(80px) translateY(-5px) rotateX(-5deg) rotateY(-10deg)';
             });
 
-            // :active state - on release (back to hover state)
             container.addEventListener('mouseup', () => {
                 if (container.classList.contains('processing')) return;
                 btnBack.style.transform = 'translateZ(20px) rotateZ(8deg) rotateX(-20deg) rotateY(-5deg)';
@@ -784,7 +1138,7 @@
                 btnFront.style.pointerEvents = 'none';
                 container.style.pointerEvents = 'none';
 
-                createParticles(container); // PATCH 1: Uncommented
+                createParticles(container);
 
                 setTimeout(() => {
                     btnFront.style.pointerEvents = 'auto';
@@ -810,7 +1164,7 @@
         }
 
         // ───────────────────────────────────────────────────────────────────────────
-        // FAB Click Handler (PATCH 2 & 3 APPLIED)
+        // FAB Click Handler
         // ───────────────────────────────────────────────────────────────────────────
 
         async function handleFABClick() {
@@ -842,12 +1196,11 @@
             }
 
             try {
-                // Wrap scrapeNotifications with retry logic (3 attempts, exponential backoff)
                 const result = await retryWithBackoff(async (attempt) => {
                     if (attempt > 1) {
                         updateStatus(`🔄 Retry attempt ${attempt}/3...`);
                     }
-                    return await scrapeNotifications(updateStatus);
+                    return await scrapeWithStrategy(updateStatus);
                 }, 3, 2000);
 
                 if (result.matches.length === 0) {
@@ -861,7 +1214,7 @@
                     return;
                 }
 
-                // PATCH 3: Scroll to top first
+                // Scroll to top first
                 updateStatus('📍 Scrolling to top...');
                 await new Promise(resolve => {
                     const startY = window.scrollY;
@@ -882,7 +1235,7 @@
                     requestAnimationFrame(animate);
                 });
 
-                // PATCH 3: Sequential reveal with scroll into view
+                // Sequential reveal with scroll into view
                 updateStatus(`✨ Revealing ${result.matches.length} matches...`);
 
                 for (let i = 0; i < result.matches.length; i++) {
@@ -918,7 +1271,6 @@
 
                 updateStatus('⏳ Waiting for worker...');
 
-                // PATCH 2: Improved worker ready detection
                 await new Promise((resolve, reject) => {
                     const timeout = setTimeout(() => {
                         window.removeEventListener('message', handler);
@@ -972,9 +1324,8 @@
                 console.error('[LinkedIn AI] Scraper failed after retries:', error);
                 updateStatus(`❌ Error: ${error.message}`);
 
-                // Provide helpful recovery suggestions
                 if (error.message.includes('Container not found')) {
-                    updateStatus('💡 Tip: Make sure you\'re on linkedin.com/notifications');
+                    updateStatus('💡 Tip: Make sure you\'re on the right LinkedIn page');
                 } else if (error.message.includes('No cards found')) {
                     updateStatus('💡 Tip: Try scrolling manually, then retry');
                 } else {
@@ -986,7 +1337,7 @@
                     statusOverlay.style.opacity = '0';
                     statusOverlay.style.padding = '0';
                     container.classList.remove('processing');
-                }, 5000); // Longer timeout to read suggestions
+                }, 5000);
             }
         }
 
@@ -998,7 +1349,7 @@
         });
 
         createEnhancedFAB();
-        console.log('[LinkedIn AI] 💡 Click the button to scan for VIP posts');
+        console.log(`[LinkedIn AI] 💡 Click the button to scan for VIP posts (${PAGE_TYPE} mode)`);
     }
 
     // ═════════════════════════════════════════════════════════════════════════════
@@ -1006,7 +1357,6 @@
     // ═════════════════════════════════════════════════════════════════════════════
 
     if (PAGE_TYPE === 'POST') {
-        // Wait for DOM to be fully ready
         if (document.readyState !== 'complete') {
             window.addEventListener('load', initPostPage);
         } else {
@@ -1019,145 +1369,131 @@
             let postData = {};
 
             function parseDraftsFromURL() {
-            // Try hash params first (new system)
-            const hash = window.location.hash.slice(1);
-            if (hash) {
-                try {
-                    const params = new URLSearchParams(hash);
-                    const selected = parseInt(params.get('selected')) || 1;
-                    drafts = [
-                        params.get('draft1') ? JSON.parse(decodeURIComponent(params.get('draft1'))) : '',
-                        params.get('draft2') ? JSON.parse(decodeURIComponent(params.get('draft2'))) : '',
-                        params.get('draft3') ? JSON.parse(decodeURIComponent(params.get('draft3'))) : ''
-                    ].filter(Boolean);
+                const hash = window.location.hash.slice(1);
+                if (hash) {
+                    try {
+                        const params = new URLSearchParams(hash);
+                        const selected = parseInt(params.get('selected')) || 1;
+                        drafts = [
+                            params.get('draft1') ? JSON.parse(decodeURIComponent(params.get('draft1'))) : '',
+                            params.get('draft2') ? JSON.parse(decodeURIComponent(params.get('draft2'))) : '',
+                            params.get('draft3') ? JSON.parse(decodeURIComponent(params.get('draft3'))) : ''
+                        ].filter(Boolean);
 
-                    if (drafts.length > 0) {
-                        currentDraftIndex = selected - 1;
-                        postData.postID = Utils.extractPostID(window.location.href);
-                        return drafts;
+                        if (drafts.length > 0) {
+                            currentDraftIndex = selected - 1;
+                            postData.postID = Utils.extractPostID(window.location.href);
+                            return drafts;
+                        }
+                    } catch (e) {
+                        console.error('[LinkedIn AI] Hash parse error:', e);
                     }
-                } catch (e) {
-                    console.error('[LinkedIn AI] Hash parse error:', e);
                 }
+
+                const params = new URLSearchParams(window.location.search);
+                const draft1 = params.get('draft1');
+                const draft2 = params.get('draft2');
+                const draft3 = params.get('draft3');
+
+                if (!draft1) return null;
+
+                drafts = [
+                    decodeURIComponent(draft1),
+                    draft2 ? decodeURIComponent(draft2) : null,
+                    draft3 ? decodeURIComponent(draft3) : null
+                ].filter(Boolean);
+
+                postData.postID = Utils.extractPostID(window.location.href);
+                return drafts;
             }
 
-            // Fallback to query params (old system)
-            const params = new URLSearchParams(window.location.search);
-            const draft1 = params.get('draft1');
-            const draft2 = params.get('draft2');
-            const draft3 = params.get('draft3');
-
-            if (!draft1) return null;
-
-            drafts = [
-                decodeURIComponent(draft1),
-                draft2 ? decodeURIComponent(draft2) : null,
-                draft3 ? decodeURIComponent(draft3) : null
-            ].filter(Boolean);
-
-            postData.postID = Utils.extractPostID(window.location.href);
-            return drafts;
-        }
-
-        function highlightCommentBox() {
+            function highlightCommentBox() {
                 const target = document.querySelector('.comments-comment-texteditor');
                 if (!target) {
                     console.warn('Comment texteditor not found');
                     return;
                 }
 
-                // Create container
                 const container = document.createElement('div');
                 container.className = 'li-border-container';
 
-                // Create glow layer only
                 const glowLayer = document.createElement('div');
                 glowLayer.className = 'li-border-glow';
 
-                // Wrap target and add glow
                 target.parentNode.insertBefore(container, target);
                 container.appendChild(glowLayer);
                 container.appendChild(target);
 
-                // Trigger border color animation
                 target.classList.add('li-border-active');
 
-                // Inject CSS
                 const style = document.createElement('style');
                 style.textContent = `
-                    /* Container */
                     .li-border-container {
-                    position: relative;
-                    width: 100%;
+                        position: relative;
+                        width: 100%;
                     }
 
                     .li-border-container .li-border-animated {
-                    display: none;
+                        display: none;
                     }
 
-                    /* Glow layer - fades out after 2 cycles */
                     .li-border-glow {
-                    position: absolute;
-                    inset: -12px; /* Extend beyond border for glow effect */
-                    border-radius: 8px;
-                    overflow: hidden;
-                    filter: blur(20px);
-                    z-index: 0;
-                    pointer-events: none;
-                    animation: li-glow-fadeout 1s ease-out forwards; /* Fade out over 1s */
+                        position: absolute;
+                        inset: -12px;
+                        border-radius: 8px;
+                        overflow: hidden;
+                        filter: blur(20px);
+                        z-index: 0;
+                        pointer-events: none;
+                        animation: li-glow-fadeout 1s ease-out forwards;
                     }
 
                     .li-border-glow:before {
-                    content: '';
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%) rotate(0deg);
-                    width: 200%;
-                    height: 200%;
-                    background: conic-gradient(
-                        transparent,
-                        #d4ff00,
-                        transparent 20%
-                    );
-                    animation: li-border-rotate 0.7s ease 1;
+                        content: '';
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%) rotate(0deg);
+                        width: 200%;
+                        height: 200%;
+                        background: conic-gradient(
+                            transparent,
+                            #d4ff00,
+                            transparent 20%
+                        );
+                        animation: li-border-rotate 0.7s ease 1;
                     }
 
-                    /* Animate border color on texteditor */
                     .comments-comment-texteditor {
-                    transition: border-color 1s ease;
+                        transition: border-color 1s ease;
                     }
 
                     .comments-comment-texteditor.li-border-active {
-                    border-color: #d4ff00 !important;
-                    animation: li-border-color-pulse 1s ease forwards;
+                        border-color: #d4ff00 !important;
+                        animation: li-border-color-pulse 1s ease forwards;
                     }
 
-                    /* Content stays on top */
                     .li-border-container > .comments-comment-texteditor {
-                    position: relative;
-                    z-index: 2;
+                        position: relative;
+                        z-index: 2;
                     }
 
-                    /* Rotation animation */
                     @keyframes li-border-rotate {
-                    100% {
-                        transform: translate(-50%, -50%) rotate(360deg);
-                    }
+                        100% {
+                            transform: translate(-50%, -50%) rotate(360deg);
+                        }
                     }
 
-                    /* Glow fade out */
                     @keyframes li-glow-fadeout {
-                    0% { opacity: 1; }
-                    80% { opacity: 1; } /* Stay visible during rotation */
-                    100% { opacity: 0; } /* Fade out at end */
+                        0% { opacity: 1; }
+                        80% { opacity: 1; }
+                        100% { opacity: 0; }
                     }
 
-                    /* Border color pulse */
                     @keyframes li-border-color-pulse {
-                    0% { border-color: var(--color-border-low-emphasis); }
-                    50% { border-color: #d4ff00; }
-                    100% { border-color: var(--color-border-low-emphasis); }
+                        0% { border-color: var(--color-border-low-emphasis); }
+                        50% { border-color: #d4ff00; }
+                        100% { border-color: var(--color-border-low-emphasis); }
                     }
                 `;
                 document.head.appendChild(style);
@@ -1183,15 +1519,12 @@
             }
 
             function injectDraft(commentBox, text) {
-                // Clean up any \n + spaces patterns from GPT output
                 const cleanedText = text.replace(/\n\s+\n/g, '\n\n').replace(/\n\s+/g, '\n');
 
-                // Split by newlines and trim each line
                 const lines = cleanedText.split('\n')
-                .map(line => line.trim())
-                .filter(line => line);
+                    .map(line => line.trim())
+                    .filter(line => line);
 
-                // Wrap each line in <p> tags
                 const htmlContent = lines.map(line => `<p>${line}</p>`).join('');
 
                 if (commentBox.getAttribute('contenteditable') === 'true') {
@@ -1213,45 +1546,39 @@
                     return;
                 }
 
-                // Find comment texteditor container for positioning reference
                 const commentContainer = document.querySelector('.comments-comment-texteditor');
                 if (!commentContainer) {
                     console.error('[LinkedIn AI] Comment container not found!');
                     return;
                 }
 
-                console.log('[LinkedIn AI] Comment container found:', commentContainer);
-                console.log('[LinkedIn AI] Parent element:', commentContainer.parentElement);
-
-                // Use DIV instead of BUTTON to avoid form submission
                 const btn = document.createElement('div');
                 btn.setAttribute('role', 'button');
                 btn.setAttribute('aria-label', 'Cycle through AI draft comments');
                 btn.setAttribute('data-ai-cycle-button', 'true');
                 btn.innerHTML = `<span style="font-size: 16px; margin-right: 4px;">↻</span>${currentDraftIndex + 1}/${drafts.length}`;
                 btn.style.cssText = `
-        position: fixed;
-        bottom: 50%;
-        right: 24px;
-        z-index: 99999;
-        padding: 8px 16px;
-        background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
-        color: #1c1c1c;
-        border: none;
-        border-radius: 10px;
-        font-family: 'JetBrains Mono', monospace;
-        font-weight: 600;
-        font-size: 13px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(215, 255, 86, 0.4);
-        transition: all 0.2s ease-out;
-        display: flex;
-        align-items: center;
-        user-select: none;
-        -webkit-user-select: none;
-    `;
+                    position: fixed;
+                    bottom: 50%;
+                    right: 24px;
+                    z-index: 99999;
+                    padding: 8px 16px;
+                    background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
+                    color: #1c1c1c;
+                    border: none;
+                    border-radius: 10px;
+                    font-family: 'JetBrains Mono', monospace;
+                    font-weight: 600;
+                    font-size: 13px;
+                    cursor: pointer;
+                    box-shadow: 0 4px 12px rgba(215, 255, 86, 0.4);
+                    transition: all 0.2s ease-out;
+                    display: flex;
+                    align-items: center;
+                    user-select: none;
+                    -webkit-user-select: none;
+                `;
 
-                // Hover effects
                 btn.addEventListener('mouseenter', () => {
                     btn.style.transform = 'translateY(-2px) scale(1.05)';
                     btn.style.boxShadow = '0 6px 16px rgba(215, 255, 86, 0.5)';
@@ -1262,7 +1589,6 @@
                     btn.style.boxShadow = '0 4px 12px rgba(215, 255, 86, 0.4)';
                 });
 
-                // Click handler with maximum safety
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     e.stopImmediatePropagation();
@@ -1304,7 +1630,6 @@
                     }
                 }, true);
 
-                // Append directly to body for now (easier to debug)
                 document.body.appendChild(btn);
                 console.log('[LinkedIn AI] ✅ Cycle button created and appended to body');
             }
@@ -1315,27 +1640,52 @@
                     if (postButton && !postButton.hasAttribute('data-tracked')) {
                         postButton.setAttribute('data-tracked', 'true');
                         postButton.addEventListener('click', () => {
+                            console.log('[LinkedIn AI] Comment submit detected!');
+
                             setTimeout(() => {
-                                // Extract data
                                 const finalComment = commentBox.innerText || commentBox.value || '';
                                 const originalDraft = drafts[currentDraftIndex] || '';
                                 const manualEdits = finalComment.trim() !== originalDraft.trim();
 
-                                // Build query params
-                                const params = new URLSearchParams({
-                                    action: 'track',
-                                    postId: postData.postID,
-                                    draft: (currentDraftIndex + 1).toString(),
-                                    original: encodeURIComponent(originalDraft),
-                                    comment: encodeURIComponent(finalComment),
-                                    edited: manualEdits.toString()
+                                if (!finalComment.trim()) {
+                                    console.warn('[LinkedIn AI] Comment is empty');
+                                    return;
+                                }
+
+                                console.log('[LinkedIn AI] 📊 Comment data:', {
+                                    postID: postData.postID,
+                                    selectedDraft: currentDraftIndex + 1,
+                                    length: finalComment.length,
+                                    manualEdits
                                 });
 
-                                // Open worker in new window to process tracking
-                                const workerUrl = `${CONFIG.WORKER_URL}?${params.toString()}`;
-                                window.open(workerUrl, '_blank', 'width=400,height=300');
+                                // Send to worker page via postMessage
+                                const message = {
+                                    type: 'COMMENT_POSTED',
+                                    data: {
+                                        postID: postData.postID,
+                                        selectedDraft: currentDraftIndex + 1,
+                                        originalDraft: originalDraft,
+                                        finalComment: finalComment,
+                                        manualEdits: manualEdits,
+                                        timestamp: new Date().toISOString()
+                                    }
+                                };
 
-                                console.log('[LinkedIn AI] Opened worker for comment tracking');
+                                console.log('[LinkedIn AI] 📤 Sending to worker:', message);
+
+                                // Try to send to opener window (if opened from worker)
+                                if (window.opener && !window.opener.closed) {
+                                    try {
+                                        const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
+                                        window.opener.postMessage(message, workerOrigin);
+                                        console.log('[LinkedIn AI] ✅ Sent to worker via window.opener');
+                                    } catch (error) {
+                                        console.error('[LinkedIn AI] ❌ Error sending to opener:', error);
+                                    }
+                                } else {
+                                    console.warn('[LinkedIn AI] ⚠️ No opener window (page not opened from worker)');
+                                }
                             }, 500);
                         });
                     }
@@ -1344,16 +1694,6 @@
                 observer.observe(document.body, { childList: true, subtree: true });
             }
 
-            // Auto-click "Show more" button
-            setTimeout(() => {
-                const btn = document.querySelector('.feed-shared-inline-show-more-text__see-more-less-toggle, button[aria-label*="see more"]');
-                if (btn) {
-                    btn.click();
-                    console.log('[LinkedIn AI] Clicked "Show more"');
-                }
-            }, 500);
-
-            // Initialize injection
             (async () => {
                 const parsedDrafts = parseDraftsFromURL();
                 if (!parsedDrafts) {
@@ -1363,14 +1703,13 @@
 
                 console.log('[LinkedIn AI] Found', drafts.length, 'AI drafts');
 
-                // Auto-click "Show more" FIRST and wait
                 await new Promise(resolve => {
                     setTimeout(() => {
                         const btn = document.querySelector('.feed-shared-inline-show-more-text__see-more-less-toggle, button[aria-label*="see more"]');
                         if (btn) {
                             btn.click();
                             console.log('[LinkedIn AI] Clicked "Show more"');
-                            setTimeout(resolve, 800); // Wait for expansion
+                            setTimeout(resolve, 800);
                         } else {
                             resolve();
                         }
@@ -1390,21 +1729,21 @@
                 const notification = document.createElement('div');
                 notification.innerHTML = 'AI draft loaded';
                 notification.style.cssText = `
-    position: fixed;
-    top: 24px;
-    right: 24px;
-    z-index: 99999;
-    padding: 14px 24px;
-    background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
-    color: #1c1c1c;
-    border-radius: 12px;
-    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    box-shadow: 0 4px 16px rgba(215, 255, 86, 0.4);
-    backdrop-filter: blur(12px);
-    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-`;
+                    position: fixed;
+                    top: 24px;
+                    right: 24px;
+                    z-index: 99999;
+                    padding: 14px 24px;
+                    background: linear-gradient(135deg, #D7FF56 -20%, #97b500 120%);
+                    color: #1c1c1c;
+                    border-radius: 12px;
+                    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                    font-weight: 600;
+                    font-size: 14px;
+                    box-shadow: 0 4px 16px rgba(215, 255, 86, 0.4);
+                    backdrop-filter: blur(12px);
+                    animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                `;
 
                 if (!document.getElementById('notif-slide-anim')) {
                     const style = document.createElement('style');
@@ -1426,12 +1765,12 @@
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === 'A') {
             e.preventDefault();
-            if (PAGE_TYPE === 'NOTIFICATIONS') {
+            if (PAGE_TYPE === 'VIP_SEARCH' || PAGE_TYPE === 'NOTIFICATIONS') {
                 document.getElementById('ai-assistant-fab')?.querySelector('.btn-front')?.click();
             }
         }
     });
 
-    console.log(`[LinkedIn AI] Initialized on ${PAGE_TYPE} page. Worker: ${CONFIG.WORKER_URL}`);
+    console.log(`[LinkedIn AI] v4.0 Initialized on ${PAGE_TYPE} page. Worker: ${CONFIG.WORKER_URL}`);
 
 })();
