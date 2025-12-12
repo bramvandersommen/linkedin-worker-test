@@ -1,13 +1,9 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      4.0
+// @version      4.2
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
-// @match        https://www.linkedin.com/notifications/*
-// @match        https://linkedin.com/notifications/*
-// @match        https://www.linkedin.com/search/results/content/*
-// @match        https://linkedin.com/search/results/content/*
-// @match        *://www.linkedin.com/feed/*
+// @match        *://*.linkedin.com/*
 // @require      https://bramvandersommen.github.io/linkedin-worker-test/vip-config.js
 // @run-at       document-end
 // @grant        none
