@@ -920,8 +920,14 @@
       card.className = 'result-card';
       card.style.animationDelay = `${index * 0.1}s`;
       card.dataset.postId = post.POST_ID;
+      card.dataset.selectedDraft = '0';  // Track which draft tab is selected (0-indexed)
 
-      const formatLineBreaks = (text) => text.replace(/\n/g, '<br>');
+      const formatLineBreaks = (text) => {
+        if (!text) return '';
+        return text
+          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')  // **bold** → <strong>bold</strong>
+          .replace(/\n/g, '<br>');                            // \n → <br>
+      };
 
       const contentPreview = post.POST_CONTENTS.substring(0, 150);
       const isLongContent = post.POST_CONTENTS.length > 150;
@@ -948,7 +954,7 @@
         <div class="draft-content">${formatLineBreaks(post.DRAFT_3)}</div>
         
         <div class="action-buttons">
-          <a href="${post.ENRICHED_URL}" class="cta-button" target="_blank">
+          <a href="${post.ENRICHED_URL}" class="cta-button" target="_blank" onclick="return updateEnrichedUrl(this)">
             💬 Comment on LinkedIn
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M6 3L11 8L6 13"/>
@@ -993,12 +999,44 @@
       const card = button.closest('.result-card');
       const tabs = card.querySelectorAll('.draft-tab');
       const contents = card.querySelectorAll('.draft-content');
-      
+
       tabs.forEach(tab => tab.classList.remove('active'));
       contents.forEach(content => content.classList.remove('active'));
-      
+
       button.classList.add('active');
       contents[index].classList.add('active');
+
+      // Track which draft is selected (0-indexed)
+      card.dataset.selectedDraft = index.toString();
+    };
+
+    window.updateEnrichedUrl = function(linkElement) {
+      const card = linkElement.closest('.result-card');
+      const selectedDraft = parseInt(card.dataset.selectedDraft || '0');
+      const baseUrl = linkElement.getAttribute('href');
+
+      // Convert 0-indexed to 1-indexed for URL (draft 0 → selected=1)
+      const selectedParam = selectedDraft + 1;
+
+      // Parse existing URL to check if it has a hash or query params
+      const url = new URL(baseUrl);
+
+      // Add selected draft to hash (scraper reads from hash first)
+      if (url.hash) {
+        // Hash exists, append or update selected param
+        const hashParams = new URLSearchParams(url.hash.slice(1));
+        hashParams.set('selected', selectedParam);
+        url.hash = hashParams.toString();
+      } else {
+        // No hash, create new one with just selected param
+        url.hash = `selected=${selectedParam}`;
+      }
+
+      // Update the href with the modified URL
+      linkElement.setAttribute('href', url.toString());
+
+      // Return true to allow the link to navigate
+      return true;
     };
 
     window.archivePost = archivePost;
