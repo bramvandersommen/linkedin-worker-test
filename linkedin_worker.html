@@ -257,6 +257,22 @@
         transform: translateY(0);
       }
     }
+
+    /* New post sliding in from top */
+    .result-card.new-post-top {
+      animation: slideInFromTop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    @keyframes slideInFromTop {
+      from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
     
     .result-header {
       margin-bottom: 1.5rem;
@@ -1073,14 +1089,25 @@
       }
       
       // Add new posts to display
-      uniquePosts.forEach((post, index) => {
-        const globalIndex = allEnrichedPosts.length + index;
-        const card = createResultCard(post, globalIndex);
-        resultsContainer.appendChild(card);
-      });
-
-      // Add to global collection
-      allEnrichedPosts.push(...uniquePosts);
+      if (isPreloaded) {
+        // Preloaded posts: add to bottom (older posts)
+        uniquePosts.forEach((post, index) => {
+          const globalIndex = allEnrichedPosts.length + index;
+          const card = createResultCard(post, globalIndex);
+          resultsContainer.appendChild(card);
+        });
+        // Add to global collection
+        allEnrichedPosts.push(...uniquePosts);
+      } else {
+        // New posts from scraper: insert at TOP (newest first)
+        uniquePosts.reverse().forEach((post, index) => {
+          const card = createResultCard(post, index);
+          card.classList.add('new-post-top');
+          resultsContainer.prepend(card);
+        });
+        // Add to beginning of global collection
+        allEnrichedPosts.unshift(...uniquePosts.reverse());
+      }
       
       // Update stats
       const draftedCount = isPreloaded ? uniquePosts.length : allEnrichedPosts.filter(p => p.status === 'existing_drafted' || p.SOURCE === 'existing').length;
