@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      4.2
+// @version      4.3
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
 // @match        *://*.linkedin.com/*
 // @require      https://bramvandersommen.github.io/linkedin-worker-test/vip-config.js
@@ -42,6 +42,8 @@
     const CONFIG = {
         WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html',
         N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
+        MAX_POSTS: 2,  // Limit number of posts to scrape (for testing)
+        ENABLE_NOTIFICATIONS_FALLBACK: false,  // Disable notifications scraping (VIP search only)
         VIP_LIST: [
             {
                 name: 'Patrick Huijs',
@@ -178,7 +180,10 @@
     // SCRAPER PAGES - VIP_SEARCH + NOTIFICATIONS
     // ═════════════════════════════════════════════════════════════════════════════
 
-    if (PAGE_TYPE === 'VIP_SEARCH' || PAGE_TYPE === 'NOTIFICATIONS') {
+    const shouldActivateScraper = PAGE_TYPE === 'VIP_SEARCH' ||
+                                   (PAGE_TYPE === 'NOTIFICATIONS' && CONFIG.ENABLE_NOTIFICATIONS_FALLBACK);
+
+    if (shouldActivateScraper) {
 
         let workerWindow = null;
         let statusOverlay = null;
@@ -195,15 +200,12 @@
         const SPREAD = 5;
 
         function createParticles(container) {
-            console.log('[LinkedIn AI] Creating particles in container:', container.id);
-
             let wrapper = container.querySelector('.particle-wrapper');
             if (!wrapper) {
                 wrapper = document.createElement('div');
                 wrapper.className = 'particle-wrapper';
                 wrapper.style.cssText = 'position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible;';
                 container.insertBefore(wrapper, container.firstChild);
-                console.log('[LinkedIn AI] Created particle wrapper');
             }
 
             function rand(min, max) {
@@ -331,7 +333,6 @@
                 try {
                     const result = strategy(element);
                     if (result) {
-                        console.log(`[LinkedIn AI] Profile extracted via ${result.source}`);
                         return result;
                     }
                 } catch (err) {
@@ -394,7 +395,6 @@
                     lastError = error;
                     if (attempt < maxAttempts) {
                         const delay = baseDelay * Math.pow(2, attempt - 1);
-                        console.log(`[LinkedIn AI] Attempt ${attempt} failed, retrying in ${delay}ms...`);
                         await new Promise(resolve => setTimeout(resolve, delay));
                     }
                 }
@@ -434,7 +434,6 @@
             }
 
             if (bestCandidate) {
-                console.log(`[LinkedIn AI] Container found via pattern (${maxMatches} post indicators)`);
                 return bestCandidate;
             }
 
@@ -772,18 +771,21 @@
                 console.warn('[LinkedIn AI] Warnings:', warnings);
             }
 
-            console.log(`[LinkedIn AI] VIP Search scrape complete: ${matches.length} matches, ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
+            // Apply MAX_POSTS limit if configured
+            const limitedMatches = CONFIG.MAX_POSTS ? matches.slice(0, CONFIG.MAX_POSTS) : matches;
+
+            console.log(`[LinkedIn AI] VIP Search scrape complete: ${limitedMatches.length} matches (${matches.length} total), ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
 
             return {
                 meta: {
                     totalCards: allCards.length,
-                    finalMatchCount: matches.length,
+                    finalMatchCount: limitedMatches.length,
                     partialDataCount: partialMatches,
                     elapsed: `${elapsed}ms`,
                     warnings,
                     strategy: 'VIP_SEARCH'
                 },
-                matches
+                matches: limitedMatches
             };
         }
 
@@ -935,9 +937,7 @@
 
                     if (!isVIP) return;
 
-                    if (matchMethod) {
-                        console.log(`[LinkedIn AI] ✓ Matched VIP via ${matchMethod}:`, nameText);
-                    }
+                    // VIP matched successfully
 
                     if (!/posted:/i.test(fullHeadline)) return;
 
@@ -1002,18 +1002,21 @@
                 console.log('[LinkedIn AI] VIP List:', CONFIG.VIP_LIST);
             }
 
-            console.log(`[LinkedIn AI] Notifications scrape complete: ${matches.length} matches, ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
+            // Apply MAX_POSTS limit if configured
+            const limitedMatches = CONFIG.MAX_POSTS ? matches.slice(0, CONFIG.MAX_POSTS) : matches;
+
+            console.log(`[LinkedIn AI] Notifications scrape complete: ${limitedMatches.length} matches (${matches.length} total), ${partialMatches} partial, ${warnings.length} warnings, ${elapsed}ms`);
 
             return {
                 meta: {
                     totalCards: allCards.length,
-                    finalMatchCount: matches.length,
+                    finalMatchCount: limitedMatches.length,
                     partialDataCount: partialMatches,
                     elapsed: `${elapsed}ms`,
                     warnings,
                     strategy: 'NOTIFICATIONS'
                 },
-                matches
+                matches: limitedMatches
             };
         }
 
@@ -1029,17 +1032,29 @@
                     if (result.matches.length > 0) {
                         return result;
                     }
-                    // If no matches, throw to trigger fallback
-                    throw new Error('No VIP posts found in search results');
+                    // If no matches, check if fallback is enabled
+                    if (CONFIG.ENABLE_NOTIFICATIONS_FALLBACK) {
+                        throw new Error('No VIP posts found in search results');
+                    } else {
+                        return result; // Return empty result, no fallback
+                    }
                 } catch (err) {
-                    console.warn('[LinkedIn AI] VIP Search strategy failed:', err.message);
-                    onProgress?.('⚠️ VIP Search failed, trying Notifications fallback...');
-                    // Try notifications as fallback (user might be on wrong page)
-                    return await scrapeNotifications(onProgress);
+                    if (CONFIG.ENABLE_NOTIFICATIONS_FALLBACK) {
+                        console.warn('[LinkedIn AI] VIP Search strategy failed:', err.message);
+                        onProgress?.('⚠️ VIP Search failed, trying Notifications fallback...');
+                        return await scrapeNotifications(onProgress);
+                    } else {
+                        console.warn('[LinkedIn AI] VIP Search strategy failed (fallback disabled):', err.message);
+                        throw err; // Re-throw error, no fallback
+                    }
                 }
             } else if (PAGE_TYPE === 'NOTIFICATIONS') {
-                onProgress?.('📬 Using Notifications strategy...');
-                return await scrapeNotifications(onProgress);
+                if (CONFIG.ENABLE_NOTIFICATIONS_FALLBACK) {
+                    onProgress?.('📬 Using Notifications strategy...');
+                    return await scrapeNotifications(onProgress);
+                } else {
+                    throw new Error('Notifications scraping is disabled');
+                }
             } else {
                 throw new Error('Unsupported page type');
             }
@@ -1305,7 +1320,6 @@
                     timestamp: Date.now()
                 }, workerOrigin);
                 console.log('[LinkedIn AI] Sent VIP_QUEUE with', serializablePosts.length, 'posts');
-                console.log(serializablePosts);
 
                 updateStatus('✅ Posts sent to worker!');
 
@@ -1533,12 +1547,10 @@
 
                 commentBox.focus();
                 highlightCommentBox();
-                console.log('[LinkedIn AI] Injected draft with', lines.length, 'lines');
             }
 
             function createCycleButton(commentBox) {
                 if (drafts.length === 1) {
-                    console.log('[LinkedIn AI] Only 1 draft, skipping button');
                     return;
                 }
 
@@ -1627,7 +1639,6 @@
                 }, true);
 
                 document.body.appendChild(btn);
-                console.log('[LinkedIn AI] ✅ Cycle button created and appended to body');
             }
 
             function watchForPostSubmit(commentBox) {
@@ -1636,7 +1647,6 @@
                     if (postButton && !postButton.hasAttribute('data-tracked')) {
                         postButton.setAttribute('data-tracked', 'true');
                         postButton.addEventListener('click', () => {
-                            console.log('[LinkedIn AI] Comment submit detected!');
 
                             setTimeout(() => {
                                 const finalComment = commentBox.innerText || commentBox.value || '';
@@ -1667,8 +1677,6 @@
                                         timestamp: new Date().toISOString()
                                     }
                                 };
-
-                                console.log('[LinkedIn AI] 📤 Sending to worker:', message);
 
                                 // Try to send to opener window (if opened from worker)
                                 if (window.opener && !window.opener.closed) {
@@ -1761,7 +1769,7 @@
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.shiftKey && e.key === 'A') {
             e.preventDefault();
-            if (PAGE_TYPE === 'VIP_SEARCH' || PAGE_TYPE === 'NOTIFICATIONS') {
+            if (shouldActivateScraper) {
                 document.getElementById('ai-assistant-fab')?.querySelector('.btn-front')?.click();
             }
         }
