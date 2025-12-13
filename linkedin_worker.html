@@ -657,20 +657,43 @@
       const card = document.querySelector(`[data-post-id="${postId}"]`);
       if (!card) return;
 
-      // Force browser to paint current state before animation
-      card.style.transform = 'translateX(0) scale(1)';
-      card.style.opacity = '1';
+      // Disable pointer events immediately
+      card.style.pointerEvents = 'none';
 
-      // Use requestAnimationFrame to ensure repaint happens first
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Now trigger the animation
-          card.classList.add('sliding-out');
-        });
+      // Get card's current height for smooth collapse
+      const cardHeight = card.offsetHeight;
+
+      // JavaScript-based animation using Web Animations API
+      const slideAnimation = card.animate([
+        {
+          transform: 'translateX(0) scale(1) skewX(0deg)',
+          opacity: 1,
+          filter: 'blur(0px)',
+          height: `${cardHeight}px`,
+          marginTop: '0',
+          marginBottom: '3rem',
+          paddingTop: '2rem',
+          paddingBottom: '2rem'
+        },
+        {
+          transform: 'translateX(-120%) scale(0.85) skewX(-8deg)',
+          opacity: 0,
+          filter: 'blur(15px)',
+          height: '0px',
+          marginTop: '0',
+          marginBottom: '0',
+          paddingTop: '0',
+          paddingBottom: '0',
+          offset: 1
+        }
+      ], {
+        duration: 650,
+        easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        fill: 'forwards'
       });
 
-      // Remove after animation completes (600ms + 150ms delay + 100ms buffer)
-      setTimeout(() => {
+      // Remove card after animation completes
+      slideAnimation.onfinish = () => {
         card.remove();
 
         // Update stats
@@ -688,7 +711,7 @@
             </div>
           `;
         }
-      }, 850);  // 600ms animation + 150ms delay + 100ms buffer
+      };
     }
 
     const N8N_WEBHOOK_BASE_URL = 'https://webhook-processor-production-84a9.up.railway.app/webhook/';
