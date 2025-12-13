@@ -666,7 +666,7 @@
       // JavaScript-based animation using Web Animations API
       const slideAnimation = card.animate([
         {
-          transform: 'translateX(0) scale(1) skewX(0deg)',
+          transform: 'translateX(0) scale(1)',
           opacity: 1,
           filter: 'blur(0px)',
           height: `${cardHeight}px`,
@@ -676,9 +676,9 @@
           paddingBottom: '2rem'
         },
         {
-          transform: 'translateX(-120%) scale(0.85) skewX(-8deg)',
+          transform: 'translateX(-100%) scale(0.95)',
           opacity: 0,
-          filter: 'blur(15px)',
+          filter: 'blur(8px)',
           height: '0px',
           marginTop: '0',
           marginBottom: '0',
@@ -687,8 +687,8 @@
           offset: 1
         }
       ], {
-        duration: 650,
-        easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        duration: 500,
+        easing: 'cubic-bezier(0.4, 0.0, 0.2, 1)',  // Smooth ease-out
         fill: 'forwards'
       });
 
