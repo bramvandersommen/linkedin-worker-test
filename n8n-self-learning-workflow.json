@@ -1,0 +1,371 @@
+{
+  "name": "LinkedIn AI Self-Learning Loop",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 2 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Schedule (Daily 2am)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Post and Comment Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {
+          "rangeDefinition": "specifyRange",
+          "range": "A:R"
+        }
+      },
+      "id": "read-comment-tracker",
+      "name": "Read Comment Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        460,
+        300
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": ""
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.STATUS }}",
+              "rightValue": "Commented",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "condition-2",
+              "leftValue": "={{ $json['Learned_From'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "filter-unprocessed",
+      "name": "Filter: Commented & Not Learned",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Levenshtein distance function (most accurate edit distance)\nfunction levenshteinDistance(str1, str2) {\n  const len1 = str1.length;\n  const len2 = str2.length;\n  const matrix = [];\n\n  // Initialize matrix\n  for (let i = 0; i <= len1; i++) {\n    matrix[i] = [i];\n  }\n  for (let j = 0; j <= len2; j++) {\n    matrix[0][j] = j;\n  }\n\n  // Fill matrix\n  for (let i = 1; i <= len1; i++) {\n    for (let j = 1; j <= len2; j++) {\n      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;\n      matrix[i][j] = Math.min(\n        matrix[i - 1][j] + 1,      // deletion\n        matrix[i][j - 1] + 1,      // insertion\n        matrix[i - 1][j - 1] + cost // substitution\n      );\n    }\n  }\n\n  return matrix[len1][len2];\n}\n\n// Process each row\nconst results = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  \n  // Get selected draft based on SELECTED_DRAFT_NUM\n  const selectedDraftNum = parseInt(data['SELECTED DRAFT # ']) || 0;\n  let selectedDraft = '';\n  \n  if (selectedDraftNum === 1) {\n    selectedDraft = data['DRAFT 1'] || '';\n  } else if (selectedDraftNum === 2) {\n    selectedDraft = data['DRAFT 2'] || '';\n  } else if (selectedDraftNum === 3) {\n    selectedDraft = data['DRAFT 3'] || '';\n  }\n  \n  // Get posted comment\n  const postedComment = data['POSTED COMMENT'] || '';\n  \n  // Skip if either is empty\n  if (!selectedDraft || !postedComment) {\n    continue;\n  }\n  \n  // Normalize whitespace (trim and collapse multiple spaces/newlines)\n  const normalizedDraft = selectedDraft.trim().replace(/\\s+/g, ' ');\n  const normalizedComment = postedComment.trim().replace(/\\s+/g, ' ');\n  \n  // Calculate Levenshtein distance\n  const editDistance = levenshteinDistance(normalizedDraft, normalizedComment);\n  \n  // Calculate percentage (relative to final comment length)\n  const editDistancePct = (editDistance / normalizedComment.length) * 100;\n  \n  // Add to results with all necessary data\n  results.push({\n    json: {\n      // Original data\n      POST_ID: data['POST ID'],\n      VIP_NAME: data['VIP NAME'],\n      POST_CONTENTS: data['POST CONTENTS'],\n      POST_URL: data['POST URL'],\n      SELECTED_DRAFT_NUM: selectedDraftNum,\n      BAD_DRAFT: selectedDraft,\n      GOOD_COMMENT: postedComment,\n      COMMENTED_AT: data['COMMENTED AT'],\n      \n      // Calculated fields\n      EDIT_DISTANCE_PCT: Math.round(editDistancePct * 100) / 100, // Round to 2 decimals\n      LANGUAGE: data['POST CONTENTS'] ? detectLanguage(data['POST CONTENTS']) : 'EN',\n      PROCESSED_DATE: new Date().toISOString(),\n      \n      // For updating tracker\n      ROW_NUMBER: item.json.row_number || data.row_number\n    }\n  });\n}\n\n// Simple language detection (same as current system)\nfunction detectLanguage(text) {\n  const firstSentence = text.split(/[.!?]/)[0] || '';\n  const dutchWords = ['zoals', 'van', 'het', 'een', 'wat', 'die', 'voor', 'met', 'is', 'zijn', 'door', 'mijn', 'jouw', 'de', 'dat'];\n  \n  const lowerText = firstSentence.toLowerCase();\n  const hasDutch = dutchWords.some(word => lowerText.includes(` ${word} `));\n  \n  return hasDutch ? 'NL' : 'EN';\n}\n\nreturn results;"
+      },
+      "id": "calculate-edit-distance",
+      "name": "Calculate Edit Distance %",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": ""
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.EDIT_DISTANCE_PCT }}",
+              "rightValue": 40,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "check-threshold",
+      "name": "IF Edit Distance > 40%",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=1",
+          "mode": "list",
+          "cachedResultName": "Self-Learning Training"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "POST_ID": "={{ $json.POST_ID }}",
+            "VIP_NAME": "={{ $json.VIP_NAME }}",
+            "POST_CONTENTS": "={{ $json.POST_CONTENTS }}",
+            "POST_URL": "={{ $json.POST_URL }}",
+            "LANGUAGE": "={{ $json.LANGUAGE }}",
+            "SELECTED_DRAFT_NUM": "={{ $json.SELECTED_DRAFT_NUM }}",
+            "BAD_DRAFT": "={{ $json.BAD_DRAFT }}",
+            "GOOD_COMMENT": "={{ $json.GOOD_COMMENT }}",
+            "EDIT_DISTANCE_PCT": "={{ $json.EDIT_DISTANCE_PCT }}",
+            "PROCESSED_DATE": "={{ $json.PROCESSED_DATE }}",
+            "COMMENTED_AT": "={{ $json.COMMENTED_AT }}"
+          },
+          "matchingColumns": [],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "write-to-training",
+      "name": "Append to Self-Learning Training",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1340,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Post and Comment Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Learned_From": "TRUE",
+            "Learned_At": "={{ $json.PROCESSED_DATE }}"
+          },
+          "matchingColumns": [
+            "POST_ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "update-tracker",
+      "name": "Update Comment Tracker",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1560,
+        200
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "",
+          "mode": "list",
+          "cachedResultName": ""
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Post and Comment Tracker"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Learned_From": "SKIPPED",
+            "Learned_At": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "POST_ID"
+          ],
+          "schema": []
+        },
+        "options": {}
+      },
+      "id": "mark-skipped",
+      "name": "Mark as Skipped (< 40%)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4,
+      "position": [
+        1340,
+        400
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule (Daily 2am)": {
+      "main": [
+        [
+          {
+            "node": "Read Comment Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Comment Tracker": {
+      "main": [
+        [
+          {
+            "node": "Filter: Commented & Not Learned",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Commented & Not Learned": {
+      "main": [
+        [
+          {
+            "node": "Calculate Edit Distance %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Edit Distance %": {
+      "main": [
+        [
+          {
+            "node": "IF Edit Distance > 40%",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Edit Distance > 40%": {
+      "main": [
+        [
+          {
+            "node": "Append to Self-Learning Training",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mark as Skipped (< 40%)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append to Self-Learning Training": {
+      "main": [
+        [
+          {
+            "node": "Update Comment Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "updatedAt": "2025-12-13T00:00:00.000Z",
+  "versionId": ""
+}

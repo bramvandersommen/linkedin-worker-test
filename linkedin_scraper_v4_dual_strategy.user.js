@@ -1469,9 +1469,9 @@
                         background: conic-gradient(
                             transparent,
                             #d4ff00,
-                            transparent 20%
+                            transparent 4%
                         );
-                        animation: li-border-rotate 0.7s ease 1;
+                        animation: li-border-rotate 1s cubic-bezier(0.49, 0.002, 0.454, 1.001);
                     }
 
                     .comments-comment-texteditor {

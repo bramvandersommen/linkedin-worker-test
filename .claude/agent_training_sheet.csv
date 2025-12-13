@@ -1,0 +1,1993 @@
+﻿ROW ID,POST CONTENTS,USER COMMENT,LANGUAGE,QUALITY RATING,DATE,VIP NAME,AI DRAFT 1,AI DRAFT 1 EVAL,AI DRAFT 2,AI DRAFT 2 EVAL,AI DRAFT 3,AI DRAFT 3 EVAL,BEST DRAFT,POST URL,,,,,,,,,,
+2,"Your Webflow site is much slower than you think. 
+ 
+ Here is a list of 7 things that significantly kill website performance: 
+ 
+ 1. Uncompressed images 
+ – Everyone knows this, but when I optimize a website, I notice that 10-20% of images are not compressed, which people simply forget about. 
+ – Fix: Be sure to check your assets before launching a website. Images should not exceed 200KB in size. 
+ 
+ 2. Custom scripts in the <head> section
+ – Any script pauses the loading of HTML, and the browser waits for it to execute. 
+ – Fix: Add “defer” to the <script> tag or move the code before </body> where possible.
+ 
+ 3. Loading a large number of CMS items on a page 
+ – Webflow loads up to 100 items at a time. Preferably <20 items.
+ – Fix: Enable pagination, use Finsweet Load, or limit collection. 
+ 
+ 4. Animations and interaction on every element of the website 
+ – JavaScript significantly reduces website performance on mobile devices. Users care about content and a product, not animations.
+ – Fix: Reduce the number of fade in animations. Use CSS for Interactions. 
+ 
+ 5. Loading external fonts 
+ – Each font downloaded from Google/Adobe increases the website loading time by 300-500ms.
+ – Fix: Self-host fonts on Webflow in woff2 format. Important! Use preload for fonts that are used on the main screen (ChatGPT will help you with this, or I will make a tutorial). 
+ 
+ 6. Unused integration scripts 
+ – Often, a client may add a large number of scripts for analytics, even if they are no longer using them. 
+ – Fix: Use only critically important scripts. Load scripts via GTM after obtaining user consent. 
+ 
+ 7. Videos/iframes without lazy load 
+ – YouTube/Vimeo embeds slow down loading times. 
+ – Fix: Use lazy loading. Ideally, load videos either after the page has finished loading or when the user clicks on them. 
+ 
+ Doesn't the difference between 3s and 1.2s of loading time look significant?
+ Conversion rates can increase by 20-30%.
+ 
+ Which one are you fixing first?","#3 is often overlooked! At launch they only have 5 blog posts, so the dev did not thing about setting up a load more functionality. Now 1 Year and 100 posts later.... ",EN,,2025-11-26T21:40:24.321Z,Dmytro Bala,"I once watched a launch stall because images were never compressed.
+
+A B2B fintech client of mine had average load times of 3.8 seconds. We compressed assets, self hosted fonts and deferred scripts, dropping load time to 1.3 seconds and increasing conversions by 20 percent.
+
+Start with an assets audit before any launch. Which asset category would you fix first?",“ increasing conversions” comes out of nowhere. There is no evidence here that the page load caused this. Keep 1 argument per story.,"Most teams chase fancy interactions while ignoring the basics.
+
+I see marketing teams add animations to every section, hurting mobile speed. One client swapped JavaScript animations for CSS and deferred scripts, cutting mobile load by half.
+
+Prioritize content speed over decorative motion. Have you measured mobile performance before adding animations?",The question feels forced. “One client swapped X ” should be “I swapped X for a client”,"What if your CMS structure is the real performance bottleneck?
+
+A client loaded 100 CMS items per page thinking it improved visibility. We added pagination and conditional loading, dropping load time from 3.4 seconds to 1.1 seconds and improving conversions.
+
+Design CMS for autonomy and speed first. Which pages are heaviest on your site?","“improving conversions” is too vague. The conversion in this case is “increase clicks on blogs”. The question is not correct here. The post is giving tips, they don’t struggle themselves, so pointing that question to them does not make sense’",,,,,,,,,,,,
+3,"Your website should talk like your customers. And, often, it’s hard for us founders to deliver it.
+ 
+ 
+ A typical startup founder week is a mixed bag of product development, marketing, and sales.
+ 
+ Sometimes, after coding a new feature for days, we magically need to switch into marketers.
+ 
+ The risk is that we write something way too technical and complex.
+ 
+ ===
+ 
+ It’s human.
+ 
+ Even if we try our best, sometimes we are knee deep in the nerdy context.
+ 
+ And most prospects couldn't care less about techy talk.
+ 
+ ===
+ 
+ And don’t get me wrong, prospects do care about features.
+ 
+ A lot.
+ 
+ But only in the context of the problem they are trying to solve.
+ 
+ And that’s the difficult part to deliver after working on a new feature that you are incredibly proud of.
+ 
+ ===
+ 
+ The best way for me to avoid writing something too nerdy is to reset and go back to customer call recordings.
+ 
+ Use AI to find one insight.
+ 
+ One insight into why a customer cares about the solution.
+ 
+ And that powers my whole blog post, landing page, or LinkedIn post.
+ 
+ ===
+ 
+ Marketing ain’t rocket science.
+ 
+ But you do need to reset your vibe coding self and talk like your customers.","I find this still difficult. I'm here talking about 'website components' every day, but some of my customers have no idea what that is..",EN,,2025-11-26T21:41:00.602Z,Toni Hopponen,"I once watched a founder write features that customers couldn't parse.
+
+A B2B fintech client shipped feature-heavy pages that read like release notes.
+We mapped customer call quotes into CMS fields and rewrote headlines to lead with outcomes.
+They cut launch time from five days to same day.
+Trial signups rose 30%.
+
+Reset to customer language before you write anything else.
+
+Who on your team owns the recording to copy habit?","The question is unrelated here. Match the question with the comment, not with the post. “They cut launch time from five days to same day.” is not suitable here. Rewriting content causes conversion effect. Not launch time effect.","Contrarian insight: prospects rarely care about how the feature works.
+
+I see teams bury customer benefits under specs.
+One client reorganized their CMS so benefits lead every template.
+The result was faster approvals and 25% higher demo requests.
+
+Start pages with the problem and customer quote, not the spec.
+
+Do you have a headline formula that starts with customer language?","Good comment. 1 argument, 1 outcome.","It took me years to stop writing for engineers.
+
+Now I force a tiny habit before every copy task.
+I pull one customer call quote and build my headline from that.
+That habit cut debate time and kept pages customer focused.
+
+Copy starts with a customer voice, not a feature list.
+
+What one customer quote would change your homepage today?","The comment is almost good. But the question is not in place here. One mistake, I don’t write for engineers. Make it simpler like: “It took me a while to stop writing to complicated”",,,,,,,,,,,,
+4,"The #1 thing I teach SMB & MM AEs when it comes to closing more:
+ 
+ → Prospects should never feel like they're being sold to
+ 
+ They should feel like you've been hired on retainer to give them the best advice (hard to do when you have a quota)
+ 
+ I've been teaching this concept for years when I was a VP of sales.
+ 
+ That's how my AEs were closing 50-75% of their demos.
+ 
+ Here are 4 things you can do to build trust with your prospect so you can close more by 'unselling'
+ 
+ (1) Ask to delay:
+ When a prospect tells you their timeline is ""this quarter"" don't move onto the next question. Instead, consider 'delaying' their timeline.
+ 
+ When you do this properly, the prospect will convince you on why they need it sooner..
+ 
+ E.g. ""Curious, why not later?” or “[Prospect], you mentioned you'd like to implement something sometime this quarter, curious..why not later?""
+ 
+ 
+ 
+ (2) Tell them not to change:
+ If your prospect has been using X solution for a few years but it's time to look into something else because of certain problems, push back on the change.
+ 
+ You'll come across not desparate for their business and the prospect will convince you on why the probem is worth solving with your solution.
+ 
+ E.g. ""Even with those problems you're having, seems like you've been managing your pipeline pretty good and it's kinda working...why not just continue doing what you're doing vs switching to a solution like ours?""
+ 
+ 
+ 
+ (3) Let the competiton win:
+ If the prospect tells you that your competitor is cheaper and then asks how you're different, let them win.
+ 
+ Nobody expects you to praise the competition and when you do, it's disarming.
+ 
+ E.g. ""If you're #1 goal is to find the cheapest solution on the market, I'd say go with ACME, because they'll beat us 10 out of 10 times.""
+ 
+ 
+ 
+ (4) Assume you're not a fit:
+ Most salespeople tell prospects they've come to the right place and they can solve their problems.
+ 
+ But that's way too biased.
+ 
+ Instead, tell prospects you may not be the right company for them.
+ (side note: make sure you do this early on before you dive into discovery)
+ 
+ E.g. ""I'm not sure we'd be a right fit for you..too early to tell and I would hate 
+ for you to use a solution that doesn't do at least 85% of what you need...""
+ 
+ 
+ 
+ (5) Unsell the feature:
+ After you show a feature, don't ask them if they have questions.
+ 
+ Don't ask them if they liked what they saw.
+ 
+ Ask them what they didn't like.
+ 
+ You're looking for signs that will prevent the deal from closing by assuming 
+ their are concerns.
+ 
+ E.g. ""Based on what I just showed you, what do you feel isn't 100% aligned 
+ with what had in mind?""
+ 
+ 
+ The best salespeople are unselling. They're pulling instead of pushing.
+ 
+ 
+ P.S. If you liked this, you'll love what I send every Monday morning. 6.6K+ salespeople are getting my micro sales playbooks to their inbox every Monday over here: demotoclose.com/newsletter","The #1 thing I teach SMB & MM AEs when it comes to closing more:
+
+→ Prospects should never feel like they're being sold to
+
+They should feel like you've been hired on retainer to give them the best advice (hard to do when you have a quota)
+
+I've been teaching this concept for years when I was a VP of sales.
+
+That's how my AEs were closing 50-75% of their demos.
+
+Here are 4 things you can do to build trust with your prospect so you can close more by 'unselling'
+
+(1) Ask to delay:
+When a prospect tells you their timeline is ""this quarter"" don't move onto the next question. Instead, consider 'delaying' their timeline.
+
+When you do this properly, the prospect will convince you on why they need it sooner..
+
+E.g. ""Curious, why not later?” or “[Prospect], you mentioned you'd like to implement something sometime this quarter, curious..why not later?""
+
+
+
+(2) Tell them not to change:
+If your prospect has been using X solution for a few years but it's time to look into something else because of certain problems, push back on the change.
+
+You'll come across not desparate for their business and the prospect will convince you on why the probem is worth solving with your solution.
+
+E.g. ""Even with those problems you're having, seems like you've been managing your pipeline pretty good and it's kinda working...why not just continue doing what you're doing vs switching to a solution like ours?""
+
+
+
+(3) Let the competiton win:
+If the prospect tells you that your competitor is cheaper and then asks how you're different, let them win.
+
+Nobody expects you to praise the competition and when you do, it's disarming.
+
+E.g. ""If you're #1 goal is to find the cheapest solution on the market, I'd say go with ACME, because they'll beat us 10 out of 10 times.""
+
+
+
+(4) Assume you're not a fit:
+Most salespeople tell prospects they've come to the right place and they can solve their problems.
+
+But that's way too biased.
+
+Instead, tell prospects you may not be the right company for them.
+(side note: make sure you do this early on before you dive into discovery)
+
+E.g. ""I'm not sure we'd be a right fit for you..too early to tell and I would hate 
+for you to use a solution that doesn't do at least 85% of what you need...""
+
+
+
+(5) Unsell the feature:
+After you show a feature, don't ask them if they have questions.
+
+Don't ask them if they liked what they saw.
+
+Ask them what they didn't like.
+
+You're looking for signs that will prevent the deal from closing by assuming 
+their are concerns.
+
+E.g. ""Based on what I just showed you, what do you feel isn't 100% aligned 
+with what had in mind?""
+
+
+The best salespeople are unselling. They're pulling instead of pushing.
+
+
+P.S. If you liked this, you'll love what I send every Monday morning. 6.6K+ salespeople are getting my micro sales playbooks to their inbox every Monday over here: demotoclose.com/newsletter",EN,,2025-11-26T21:41:32.220Z,Mor Assouline,"It took me years to see that unselling beats pitching in complex deals.
+
+A fintech client switched scripts to delay and assume not fit.
+Their demo to close rate jumped from 18% to 34% in three months.
+
+Start by teaching AEs to create space, not pressure.
+
+Sound familiar?",I don't help clients with sales calls or scripts,"Most sales training teaches urgency; that often backfires with smart buyers.
+
+I've seen teams optimize for quota speed not conversation quality.
+When reps let competitors win prospects relax and reveal true priorities.
+
+The outcome is faster alignment and fewer wasted cycles.
+
+Where do your AEs still push too hard?",I don't know anything about sales teams. For sales related topic only take my own sales experience. Not the sales experiences my clients have,"When did we decide that closing equals persuading every prospect?
+
+I started asking AEs to say we might not be the right fit early.
+It reduced wasted demos and improved deal quality across their pipeline.
+
+Unselling protects your time and raises conversion quality.
+
+What would change if your team said no more often?",I don't know anything about sales teams. I don't work with sales teams and I don't have a sales team. For sales related topic only take my own sales experience. Not the sales experiences my clients have,,,,,,,,,,,,
+5,"Clicks get fewer. Better get your website ready for the moment when someone visits.
+ 
+ 
+ Read a LinkedIn post.
+ 
+ View the author’s profile.
+ 
+ Visit their site.
+ 
+ ===
+ 
+ A pattern that repeats every day.
+ 
+ You do it, too.
+ 
+ And I bet you’ve thought so many times that “gosh, I don’t get what these guys offer” when visiting a page.
+ 
+ ===
+ 
+ Clicks are likely to get fewer as more people adopt AI services and trust those services to provide correct information.
+ 
+ But not every interaction is going to be performed by agents.
+ 
+ People will still visit your page.
+ 
+ To see the brand.
+ 
+ To build confidence and trust.
+ 
+ ===
+ 
+ And that’s when it really matters what your homepage says.
+ 
+ What landing pages you provide for different visitors to find the right information quickly.
+ 
+ And how up-to-date your website is.
+ 
+ ===
+ 
+ You put a ton of effort into getting attention.
+ 
+ You post. You advertise. You send cold DMs.
+ 
+ Keep doing it.
+ 
+ But gosh, make sure your website is up-to-date.","I experienced it many times when I clicking on a Linkedin ad: ""“gosh, that doesn't look like the ad”. Aligning your website with your content, profile or ads in still often overlooked...",EN,,2025-11-26T21:41:54.038Z,Toni Hopponen,"It took me three years to realize a clear homepage converts trust faster than traffic.
+
+A B2B finance client of mine cut visitor confusion by restructuring three entry paths.
+
+They cut bounce rate by 18% and increased contact starts by 35% in two weeks.
+
+If clicks shrink, make every visit count with clear entry pages.
+
+Which page do visitors land on first at your site?",,"Most teams spend ad budget while ignoring the landing experience.
+
+I see marketing teams optimize for traffic not for decisive pages.
+
+One client doubled demo requests simply by clarifying hero copy and CTA flows.
+
+Prepare for fewer clicks by making each visit decisive and fast.
+
+Which landing feels most decisive on your site today?",,"When was the last time you read your homepage as a stranger?
+
+I now ask new clients to perform that exercise in the first meeting.
+
+It reveals outdated offers empty CTAs and confusing value propositions instantly.
+
+Make updates part of weekly marketing rituals not quarterly projects.
+
+Could a 15 minute weekly check cut visitor confusion at your site?",,,,,,,,,,,,,
+6,"Lately I’ve been thinking about something school teaches us from a young age:
+ 
+ That there are two kinds of people:
+ 
+ ""Smart"" people
+ ""Dumb"" people
+ 
+ The ones who pass the test... and the ones who don’t.
+ The ones who move up a grade... and the ones who get held back.
+ The ones who get the degree... and the ones who don’t.
+ 
+ But the older I get, the more I realize how untrue this is.
+ 
+ Because in the real world, the split looks very different.
+ 
+ It’s not between ""smart"" and ""dumb.""
+ 
+ It’s between people who can act when there’s no clear answer...
+ And people who can’t.
+ 
+ School doesn't really teach that skill.
+ 
+ In fact, it does the opposite.
+ 
+ It teaches us to wait for instructions.
+ 
+ Follow the syllabus.
+ Trust the process.
+ Expect a result.
+ 
+ But life doesn’t work like that.
+ 
+ Sometimes you do everything “right” for months (or years) and still nothing happens.
+ 
+ There’s no guarantee., feedback, or grade at the end.
+ 
+ And that’s hard.
+ 
+ Especially for the ones who thrived in structured systems.
+ I’ve noticed those people struggle most when the path disappears.
+ Because they were never taught how to move forward in the dark.
+ 
+ Adaptability feels like the most important skill now.
+ 
+ Not knowledge, or memorization, but the ability to keep going when things are unclear.
+ 
+ 👉 Curious if anyone else feels this way:
+ 
+ - Did you have to unlearn the way you were taught to think in school?
+ - Has your view of “smart” changed?
+ - Am I missing something here?
+ 
+ Would love to hear your perspective.",In school I didn't want to learn and read.. Now I'm learning and reading every day and can't stop!,EN,,2025-11-26T21:42:13.355Z,Mitch Davey,"It took me years to see that structure can hide fragility.
+
+A client of mine could only launch pages when given exact specs. They produced great work but stalled whenever briefs were vague. We rebuilt their CMS and templates so anyone could launch a page in hours.
+
+Adaptability is a system problem, not just a mindset.
+
+How often do you train teams to act without perfect answers?",,"Most teams think knowledge wins, but action wins more.
+
+I see scaleup marketing teams wait for final designs, legal sign off, and data that never arrives. Small process changes let them test landing pages and learn faster. Those teams outpace competitors who chase perfect certainty.
+
+Teach teams to launch imperfect work and iterate.
+
+What's one decision your team delays waiting for clarity?",,"When did you last move forward without a clear map?
+
+I used to depend on detailed plans for every launch. After several stalled projects I built guardrails that let teams act with confidence and learn quickly. That change reclaimed 10 to 15 hours per marketer each week.
+
+The ability to act in uncertainty scales faster than any degree.
+
+How would your team change if forward motion mattered more than perfect plans?",,,,,,,,,,,,,
+7,"Zo schrijf ik headers die blijven plakken. 
+ 
+ Zodat jouw droomklant dolgraag verder scrolt. 
+ 
+ Stel, je droomklant opent je website. 
+ → En beslist binnen 3 seconden. 
+ (Ja of nee) 
+ 
+ Dat is echt moeilijk snel. 
+ (🏃🏻💨 laserfast, in ‘t Engels.) 
+ 
+ Daarom is je headertekst ontiegelijk belangrijk. 
+ Je headertekst maakt van scrollers → blijvers. 
+ 
+ Zo deed ik dat voor 3 klanten. 
+ 
+ 1. 'De juiste ogen jouw kant op' 
+ (Niels van Renselaar, marketing sidekick) 
+ (Niels z’n klanten weten preciés wie ‘de juiste’ is.) 
+ 
+ Kun jij ook: 
+ → Plaats verlangen boven dienst 
+ → Wek nieuwsgierigheid op 
+ → Kies actieve zinnen 
+ 
+ 2. 'Good brand. Good business.' 
+ (Clever Lemons, branding agency) 
+ 
+ Kun jij ook: 
+ → Oorzaak > gevolg 
+ → Herhaling blijft hangen 
+ → Maak gelijk duidelijk wat je doet
+ 
+ 3. Amplify your fans. Energize your brand.
+ (Daniel van Veldhoven, STRMCTRL)
+ 
+ Kun jij ook: 
+ → Merk én mens in de mix
+ → Rijmen brengt dichter
+ → Woorden die je ziet 
+ 
+ Wat is jouw headertekst op je website?","Eens Gaël, die eerste paar woorden moeten niet uitleggen wat je doet,
+maar waarom iemand moet blijven lezen.",NL,,2025-11-26T21:42:38.504Z,Gaël van Heijst,"Het kostte me jaren om te zien hoe headers echte beslissingen sturen.
+
+Een B2B klant van mij schakelde naar een verlangen-gedreven header.
+
+Binnen twee weken steeg de gemiddelde sessieduur met 28 procent.
+
+Kies verlangen boven dienst en gebruik actieve, nieuwsgierige zinnen.
+
+Welke header staat nu bovenaan jouw site?",,"Contrair: slimme woordgrapjes overtuigen zelden onbekende beslissers.
+
+Ik zie teams uren besteden aan clever copy zonder zakelijke metric.
+
+Een financiële scaleup stopte met slimme grappen en koos een oorzaak>gevolg header.
+
+De leadrate steeg 15 procent binnen vier weken.
+
+Herhaling en duidelijke oorzaak>gevolg werken beter dan cleverness.
+
+Welke simpele oorzaak>gevolg zin kun je morgen testen?",,"Wanneer schreef je voor het laatst een header die echt beelden oproept?
+
+Ik werkte met een merk dat rijm en ritme toevoegde aan hun header.
+
+Ze vervingen vakjargon door mensentaal en conversie verbeterde met 12 procent.
+
+Woorden die je ziet blijven plakken meer dan slimme claims.
+
+Welke beeldende zin probeer je deze week?",,,,,,,,,,,,,
+8,"Websites kosten geen €30K. 
+ Ze kosten > €100K.
+ 
+ Niet upfront. 
+ Maar verspreid over drie jaar aan:
+ 
+ - Herbouw
+ - Wachttijd
+ - Rework
+ - Support
+ - Integratieproblemen
+ - Vendor lock-in
+ - IT die ‘nee’ moet zeggen op marketing
+ - Gemist momentum
+ 
+ En dat voor een CMS dat “gratis” was.
+ 
+ Wij maken dat zichtbaar in een Total Cost of Ownership-analyse. 
+ 36 maanden doorrekenen opent ogen.
+ 
+ Webflow blijkt dan geen ‘cool design tool’. 
+ Maar een strategische keuze:
+ 
+ - 3x sneller live
+ - >80% minder dev-tijd voor kleine taken
+ - >60% lagere onderhoudskosten
+ - En marketing schakelt zélf
+ 
+ Niet omdat het fancy is. 
+ Maar omdat het werkt.
+ 
+ DM me, dan laat ik je zien waar je tonnen frustratie kunt besparen.
+ 
+ hashtag#webflow hashtag#tco hashtag#marketingops hashtag#digitalops hashtag#cms","Dit is het gesprek dat elke founder eigenlijk moet voeren vóór er ook maar één regel code geschreven wordt.
+
+Herbouw kost niet alleen dev-uren. Het kost momentum, gemiste KPI’s en frustratie bij je team. 
+
+Met het gevolg dat marketingplannen nooit live gaan..
+
+Die ‘goedkope’ website? Betaal je uiteindelijk dubbel.
+
+Helemaal eens: Webflow is geen tool.
+Het is infrastructuur voor snelheid, autonomie en schaal.
+
+👏 Slim om die 36 maanden door te rekenen. Meer teams zouden in systemen moeten denken, niet in sprints.",NL,,2025-11-26T21:43:15.624Z,Niels Kuipers,"Het kostte me jaren om dit patroon consistent te zien bij klanten.
+
+Een fintech scaleup vroeg ons hun 36 maanden TCO door te rekenen. We toonden herbouw, support en wachttijd als grootste kostenposten. Na overstap naar Webflow konden marketingteams 3x sneller pagina's live zetten.
+
+TCO maakt van Webflow geen design-tool maar een strategische keuze.
+
+Klinkt dit herkenbaar?",,"Veel teams focussen op upfront prijs en missen de werkelijke kosten.
+
+Ik zie vaak dat een 'gratis' CMS na twee jaar duurder blijkt. Integratieproblemen en rework stapelen zich op en vertragen launches.
+
+Reken 36 maanden door en beslis op basis van totale kosten.
+
+Wie rekent dit al zo door binnen zijn marketingteam?",,"Wanneer hield jij voor het laatst rekening met 36 maanden kosten?
+
+Bij een B2B dienstverlener ontdekten we terugkerende integratieproblemen die tempo halveerden. We standaardiseerden templates in Webflow zodat marketing zelf pagina's kan live zetten.
+
+Kleine investeringen upfront besparen structureel veel tijd en geld.
+
+Welke drie posten zou jij als eerste doorrekenen?",,,,,,,,,,,,,
+9,"What if “just pushing through this month” leaves you in the exact same spot next year?
+ 
+ You build.
+ You deliver.
+ You grow.
+ 
+ But in the meantime?
+ 
+ You’re juggling sales, production, and marketing.
+ 
+ Every week feels like a marathon: client calls, production issues, last-minute adjustments. Your team keeps up, but the brand you want to build barely shows.
+ 
+ The product works flawlessly.
+ 
+ But how people experience it?
+ They see that things run smoothly, that everything “works.”
+ 
+ The real story, the experience you want to deliver, stays hidden.
+ And every month that passes like this, the gap between what you create and how the world perceives it only grows.
+ 
+ Imagine bridging that gap.
+ 
+ Space opens up. Time for vision, not just reaction.
+ Control over your brand and your story.
+ Clients start seeing your product the way you always imagined, not just a solution, but an experience.
+ 
+ Sales flows more easily. Your team can act independently. And you finally get the headspace to focus on what really matters.
+ 
+ Building, creating, and steering the business instead of constantly firefighting.
+ 
+ Sound familiar?Maybe it’s time to stop keeping up… and start moving forward.",The gap between ‘what you create’ and ‘how the world precieves it’ is where the true value is hidden!,EN,,2025-11-26T21:44:20.021Z,Martijn van Meijel,"It took me a year to realize that pushing through becomes a habit.
+
+A B2B fintech client of mine rebuilt their CMS structure to stop constant handoffs.
+In three months they launched five campaign pages without engineering support and weekly backlog fell from twenty items to four.
+
+Autonomy over content changes that trajectory.
+
+Sound familiar?",,"Most teams optimize for features not for how the brand is experienced.
+
+I see marketing teams spend months on UI while workflows keep them chained.
+One client used a template system and cut page builds to two days.
+
+Process wins buy back strategic time.
+
+If you reclaimed that time what would you launch next?",,"What surprised me was how quickly perception falls behind product progress.
+
+We helped a scaleup move from reactive edits to autonomous content ownership.
+After that their demos matched product intent and sales conversations became clearer.
+
+Perception is a system problem not a one off fix.
+
+Which system would you fix first?",,,,,,,,,,,,,
+10,"What does ""developer"" even mean anymore? I just built my 2nd mobile app. I can't write code. Can't read or debug it either. Two years ago, I was a GTM executive playing with ChatGPT. Today, I'm deploying apps to production, building multi-agent systems, and automating workflows that drive real revenue. 
+ 
+ This isn't hype - it's the new reality. Here's how AI collapsed the gap between curiosity and capability, and why waiting is the riskiest move you can make.","At the dentist I still say “developer” because it’s the easiest way to explain what I do
+
+But truth is, I’m more of a systems designer.",EN,,2025-11-26T21:44:53.544Z,Vikram Ekambaram,"I worked with a founder who couldn't code yet shipped a production workflow.
+
+We used modular no-code agents to automate onboarding and marketing outreach over two weeks.
+
+They increased lead response rates by 30%.
+
+And they reclaimed about 12 hours per week for marketing.
+
+This shows capability now lives in systems not just coding skills.
+
+Sound familiar?",,"Treating AI as a toolbox misses the real change.
+
+I see teams stitch agents together without standard patterns.
+
+They end up with fragile automations and mounting technical debt.
+
+One financial services client standardized components and cut launch time by 40%.
+
+The priority should be system design not individual agent novelty.
+
+Who owns system design in your organisation?",,"It took me years to accept developers are becoming system designers.
+
+My team shifted focus from bespoke code to reusable templates.
+
+That change let marketing launch campaign pages in hours not days.
+
+Autonomy scales when you standardise patterns and hand them to non-dev teams.
+
+What's one pattern you could standardise this quarter?",,,,,,,,,,,,,
+11,"AI startups achieve $3.48M revenue per employee.
+ 
+ That's 6x higher than traditional SaaS companies. The secret?
+ 
+ Want to know the secret?
+ It's not just the AI. It's what you're not spending money on.
+ 
+ While legacy companies hire 50 person design teams, AI startups are staying lean. But here's the problem with staying too lean.
+ 
+ Your website looks like you built it between investor calls. 
+ Your brand identity is ""whatever the developer could throw together."" 
+ Your mobile app UI makes users feel like they're beta testing a punishment.
+ 
+ I get it. You're focused on the product. Design feels like something you'll fix later.
+ 
+ Except later never comes. And now you're losing deals to competitors who figured this out.
+ 
+ The math is simple. 
+ You're raising $2M to $10M rounds. 
+ You're spending $400K on a single ML engineer. 
+ But you won't invest $30K to look like you know what you're doing.
+ 
+ DesignLion works with AI founders who understand this. 
+ We build brands, websites, and apps that scale as fast as you do.
+ 
+ No bloated agency overhead. 
+ No 6 month timelines. 
+ Just design that makes your $15M valuation look believable.
+ 
+ Because investors fund the future. And the future doesn't look like your Figma file from 2019.","AI startups are solving cutting-edge problems with interfaces that look like hackathon leftovers.
+
+You don’t need a 20-person design team, just a
+
+→ A homepage that doesn’t look like a prototype
+→ A product UI build with the user in mind, not the dev team
+→ A brand that makes your pricing feel right
+
+How do you help founders balance speed vs polish in that early traction phase?",EN,,2025-11-26T21:45:23.364Z,Alex Stefan,"Design is an acceleration lever, not a fix later cost.
+
+A B2B AI client raised a $6M seed and still lost demos.
+We rebuilt their Webflow system and trained marketing to launch pages.
+
+Campaign lead time dropped from weeks to hours.
+
+Small design investments compound revenue and signal credibility fast.
+
+Does this sound familiar to founders running lean teams?",,"Lean teams often confuse doing less with doing it better.
+
+I've seen AI startups keep headcount low but accept a messy front end.
+That hurts demos and inbound quality more than additional hiring would fix.
+
+Startups should invest in modular design systems not full time design teams.
+
+Where do you draw the line between lean and underinvested?",,"It took me years to accept that speed isn't only engineering.
+
+Now I advise marketing teams to own a launchable Webflow system.
+One client reclaimed 12 hours a week and doubled their A/B tests.
+
+Design investment buys speed autonomy and better conversion data.
+
+What small design change would change your pipeline most?",,,,,,,,,,,,,
+12,"Keep creating content regularly, and your product demo calls get a lot easier.
+ 
+ 
+ Content is a long-term play.
+ 
+ Tedious at times.
+ 
+ Not for everyone.
+ 
+ ===
+ 
+ But if you write regularly, your product demo calls get so much easier over time.
+ 
+ Prospects join the call, saying they already saw your posts.
+ 
+ They have watched your product videos.
+ 
+ They are already sold into your vision.
+ 
+ ===
+ 
+ It doesn't mean you close every single one.
+ 
+ Your startup product might not deliver the promise (yet).
+ 
+ Prospect's timing might not be right.
+ 
+ ===
+ 
+ But you are already winning.
+ 
+ When people show up in calls ""ready to buy"", the rest is easy. 
+ 
+ Only coding left. 
+ 
+ Sooner or later, you win a higher percentage from demos.
+ 
+ ===
+ 
+ My content plan is super simple:
+ 
+ 1️⃣ Blog posts for Google and ChatGPT to distribute
+ 
+ 2️⃣ Landing pages to make sure prospects can find the right information easily
+ 
+ 3️⃣ LinkedIn posts and comments to build relationships with those who aren't searching for my product yet, but might do so later
+ 
+ ===
+ 
+ My product demo calls are getting easier all the time. Only coding left.","I’ve had calls where the prospect already quoted my own posts back to me.
+That kind of alignment doesn’t happen by accident, it’s the power of consistent content.",EN,,2025-11-26T21:45:40.496Z,Toni Hopponen,"I had a client who cut demo time in half with steady content.
+
+They published two product posts a week and built a short FAQ hub.
+
+Within three months prospects arrived on calls already familiar and aligned.
+
+Content turned demos into implementation conversations, not discovery sessions.
+
+Sound familiar in your pipeline?",,"Most teams focus on top of funnel metrics, not demo readiness.
+
+I see content used to chase SEO, not to pre-sell audiences.
+
+That creates noisy traffic but leaves demos as discovery problems.
+
+Swap some SEO posts for product walkthroughs and demo conversion improves.
+
+Who on your team owns pre-selling content?",,"Have you noticed demos get easier when prospects already know your story?
+
+It took me years to make content a demo enablement tool.
+
+Now I design landing pages and short videos that answer common objections.
+
+That reduces time spent convincing and increases time building with the client.
+
+What objection could a short post answer this week?",,,,,,,,,,,,,
+13,"Every marketer wants to embed AI into their processes. Few want to think about the marketing fundamentals first.
+ 
+ The more “AI-powered” becomes table stakes, the more the basics matter.
+ 
+ Everyone’s building AI-driven features or processes. Some for better, some for worse.
+ 
+ But if your product doesn’t solve a real problem or create a clear outcome, “AI-powered” won’t save you.
+ 
+ Especially if you can’t communicate those things in the first place.
+ 
+ Even at Laurel Leaf, we’re embedding AI agents into our content workflows.
+ But that came after years of:
+ 
+ 💡 figuring out what problems we solve and why clients choose us
+  🧩 refining our messaging & processes until they were second nature
+  🔥 (and a few f*ckups along the way 😅)
+ 
+ Only now are we getting close to being an “AI-supported” agency. Not just one that uses AI for the sake of it.
+ 
+ PS: If you want to help get your messaging & processes clear and then figure out where AI can help you in your content program, send me a DM. Happy to help you figure it out.","Some companies use AI as a quick fix. But I see it more as a multiplier.
+
+If your foundation is shaky, it just scales the cracks.
+
+For example: I've seen teams slap an AI chatbot on their site...
+
+But the underlying data is outdated, the SOPs are vague and the customer journey is full of gaps 😅
+
+We all know how that will turn out",EN,,2025-11-26T21:46:07.311Z,Defne Gencler,"It took me years to realize AI feels pointless without clear messaging.
+
+A Webflow client built AI content tools but still missed conversion goals.
+We restructured their CMS and simplified messaging, cutting launch time dramatically.
+
+Only then did AI add measurable value to their content program.
+
+Sound familiar?",,"Most teams chase AI features while ignoring core process failures.
+
+I often see AI widgets masking unclear messaging and messy handoffs.
+A financial services client paused AI, rewrote value props and increased pipeline 30 percent.
+
+Treat AI as a multiplier not a replacement for fundamentals.
+
+Where would your team start simplifying first?",,"When did we start assuming AI will hide a weak product?
+
+That question forced me to audit our processes before adding agents.
+We mapped client journeys and removed seven unnecessary steps first.
+
+Only then did AI make workflows faster and outcomes clearer.
+
+What's one unclear step you'd remove today?",,,,,,,,,,,,,
+14,"So we're officially rebranding next week.
+ 
+ And yesterday I announced we hit $1M ARR.
+ 
+ So technically the new company will hit $1M in like 10 seconds post rebrand. 
+ 
+ Do I launch it with a post saying 'fastest growing startup ever' like others are doing, or have to be boring and put a 'formerly team-gpt' everywhere? 
+ 
+ What would you do? 🤣",Can't wait to see the rebranding! Planning any other this for launch besides the epic-guru post?,EN,,2025-11-26T21:46:35.986Z,Andre Nunes Pedro,"Congrats, that timing is rare and powerful.
+
+A B2B client of mine rebranded on their first million and it almost broke sales.
+
+We launched with the new name plus 'formerly' across product, docs and emails for two weeks.
+
+Clarity wins on day one.
+
+Who are you trying to reassure first, users or partners?",,"I notice founders often choose cleverness over continuity.
+
+In financial services that choice extends sales cycles and raises compliance flags.
+
+A simple 'formerly' line cleared confusion and increased demo show rates by 12 percent.
+
+If your buyers are cautious, favor clarity over cleverness.
+
+Would you rather spike social buzz or steady pipeline?",,"I used to think bold claims were worth the risk.
+
+Then a scaleup I advise lost deals after dropping the old name abruptly.
+
+We tested parallel messaging, pushed the new brand and kept 'formerly' in onboarding and billing.
+
+You can create buzz without breaking customer trust.
+
+What's your priority for launch momentum?",,,,,,,,,,,,,
+15,"This SEO report updates itself. Literally. No BS.
+ 
+ - It pulls live data from Google Search Console and GA4
+ - It updates charts, tables, and scorecards
+ - It writes a fresh AI summary
+ - It styles everything into a clean, shareable deck
+ - And it runs on schedule
+ 
+ This is what reporting automation should feel like.
+ 
+ Still building reporting decks manually?
+ This is the solution you’ve been looking for.
+ 
+ React SEO, and I will send the solution to you.","The days of manual labor are starting to fade. More and more users expect real time data, auto updates, auto report etc. Love how you put this into a deck so it all comes together in the 'natural habitat' of the user",EN,,2025-11-26T21:47:24.445Z,Adriaan Dekker,"A client replaced their weekly SEO deck with an automated report.
+
+It pulled live Search Console and GA4 data and the AI wrote the summary.
+
+They cut reporting time from eight hours to under one hour.
+
+That freed two people for campaign work not slides.
+
+If reports update themselves, your team should control the narrative.
+
+Sound familiar?",,"Most teams buy dashboards and still rebuild decks manually.
+
+The visual dashboards look great but lack a consistent narrative.
+
+Connecting live data to a templated story lets marketers publish weekly without design help.
+
+Automation should deliver insights not just refreshed charts.
+
+How much time does your team spend on decks?",,"It took me years to treat reports as tools not trophies.
+
+Now a handful of B2B marketing teams run scheduled decks that update automatically.
+
+Decisions moved faster because numbers and context were available before meetings.
+
+Make reports actionable by combining live data with a short narrative.
+
+What's the one metric you'd automate first?",,,,,,,,,,,,,
+16,"I just had a sales call that I thought went ""pretty well.""
+ Then I listened back to the recording.
+ 
+ Ouch. 🤦‍♂️
+ 
+ I'm sharing this because many designers struggle with client calls. 
+ 
+ If you've ever thought ""I could've done better"" but weren't sure how, this is for you.
+ 
+ Here's what I learned from my 30-minute call for a design system project:
+ 
+ ❌ WHAT I DID WRONG:
+ 
+ 1. I let them talk for 18 minutes straight
+ 
+ Yes, listening matters. But I became a spectator in my own call. I learned a lot, but showed zero value. 
+ 
+ Why would they pick me over 4+ other designers?
+ 
+ 2. I showed I was good, but not different
+ 
+ I showed my Figma setup. I mentioned my experience. But everyone else will too. 
+ I never answered: ""Why YOU?""
+ 
+ 3. I never asked about budget, timeline, or what matters most
+ 
+ I was guessing. How can you win when you don't know what winning looks like?
+ 
+ 4. My intro was all about me, not about value
+ 
+ ❌ ""I'm 39, married, got into UX 12 years ago...""
+ 
+ ✅ ""I help e-commerce companies build design systems. Last month I helped [Company] solve [Problem] by doing [Thing].""
+ 
+ 5. I ended the call like I was waiting to be picked
+ 
+ ❌ ""If you have questions, reach out.""
+ 
+ ✅ ""I'll send you a proposal by Thursday showing how I'd tackle your first month. Sound good?""
+ 
+ ---
+ 
+ ✅ WHAT I SHOULD HAVE DONE:
+ 
+ → Jump in after 5-7 minutes to ask smart questions
+ 
+ This shows you're listening AND thinking.
+ 
+ → Share your expertise when they mention problems
+ 
+ ""That's common. Teams fix this two ways: [A] or [B]. For you, I'd do [B] because...""
+ 
+ → Ask these 3 questions:
+ 
+ - ""What does success look like in 3 months?""
+ - ""What worries you most about this project?""
+ - ""What would make me the obvious choice?""
+ 
+ → Make your time feel valuable
+ 
+ ""Just so you know - I'm talking to another client about similar work. I can only take one big project. I need to decide by [date].""
+ 
+ → Tell them what happens next
+ 
+ Don't wait for them to decide. You decide the next step.
+ 
+ ---
+ 
+ THE LESSON:
+ 
+ You can be the best designer in the room and still lose the project.
+ 
+ Not because you're not good.
+ 
+ Because you didn't show them why you're the RIGHT choice.
+ 
+ Skills get you the meeting.
+ Sales skills get you the work.
+ 
+ I have 20 years of experience and still mess this up. 
+ A 6/10 call versus a 9/10 call isn't about talent. 
+ It's about preparation.
+ 
+ ---
+ 
+ If you struggle with client calls, save this post. 
+ 
+ This works for freelancers, in-house designers pitching projects or anyone interviewing.
+ 
+ What's your biggest challenge in client calls? Tell me in the comments 👇
+ 
+ ---
+ 
+ P.S. - I'm writing that follow-up email now with a proposal and smart insights. Even a bad call can be saved with a great follow-up. More on that next week.","Love that you listened back to your own recording. Puts you in a different seat. Good for a new perspective :) 
+
+I use a similar exercise with clients:",EN,,2025-11-26T21:47:46.268Z,Philip Wallage,"It took me three years to realize call recordings teach more than wins.
+
+A Webflow client of mine lost two pitches despite excellent deliverables.
+We rewrote their intro, added three qualifying questions, and practiced thirty mock calls.
+Within six weeks their proposal acceptance rose from 40% to 65%.
+
+Showing why you're the right choice matters more than proving you're good.
+
+Which qualifying question changed your close rate most?",,"Most teams optimize for polish rather than for measurable outcomes.
+
+I watch marketing teams demo tools for ten minutes straight and leave without budget or deadline.
+That turns meetings into feature lists not decision moments.
+A simple script with three closing questions turned demos into decisions.
+
+Treat calls as a decision design problem, not a show-and-tell.
+
+Which closing question would you add to that script?",,"Have you ever left a call feeling useful yet unsure why they'd hire you?
+
+I had a 6/10 call last month and fixed it with a focused follow-up.
+I sent a concise proposal showing the first 30 days and key risks.
+They signed two weeks later because the plan reduced uncertainty.
+
+A concise next step often wins where talent alone cannot.
+
+How do you own the next step on weak calls?",,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,,,,,,,,,,,
