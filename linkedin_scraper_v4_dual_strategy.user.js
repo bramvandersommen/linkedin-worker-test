@@ -42,7 +42,7 @@
     const CONFIG = {
         WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html',
         N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
-        MAX_POSTS: 2,  // Limit number of posts to scrape (for testing)
+        MAX_POSTS: 10,  // Limit number of posts to scrape (for testing)
         ENABLE_NOTIFICATIONS_FALLBACK: false,  // Disable notifications scraping (VIP search only)
         VIP_LIST: [
             {
