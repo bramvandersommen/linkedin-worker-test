@@ -3,117 +3,48 @@
   "nodes": [
     {
       "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "cronExpression",
-              "expression": "0 2 * * *"
-            }
-          ]
-        }
-      },
-      "id": "schedule-trigger",
-      "name": "Schedule (Daily 2am)",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1,
-      "position": [
-        240,
-        300
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "appendOrUpdate",
         "documentId": {
           "__rl": true,
-          "value": "",
+          "value": "1ne21dfVWKu_mMxFAkXzHj92LXks5XSj6-tS1EmcNYLQ",
           "mode": "list",
-          "cachedResultName": ""
+          "cachedResultName": "Phuijs N8N LinkedIn AI Engagement Tool Config",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ne21dfVWKu_mMxFAkXzHj92LXks5XSj6-tS1EmcNYLQ/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
-          "value": "gid=0",
+          "value": 66421665,
           "mode": "list",
-          "cachedResultName": "Post and Comment Tracker"
+          "cachedResultName": "💬 Post and Comment Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ne21dfVWKu_mMxFAkXzHj92LXks5XSj6-tS1EmcNYLQ/edit#gid=66421665"
         },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {},
-          "matchingColumns": [],
-          "schema": []
-        },
-        "options": {
-          "rangeDefinition": "specifyRange",
-          "range": "A:R"
-        }
+        "options": {}
       },
-      "id": "read-comment-tracker",
+      "id": "046874b3-0596-4f21-8840-9c9d1bdecaf5",
       "name": "Read Comment Tracker",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        460,
-        300
+        -880,
+        112
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
+          "id": "3ufruIOhHou2w8Za",
           "name": "Google Sheets account"
         }
       }
     },
     {
       "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": false,
-            "leftValue": ""
-          },
-          "combinator": "and",
-          "conditions": [
-            {
-              "id": "condition-1",
-              "leftValue": "={{ $json.STATUS }}",
-              "rightValue": "Commented",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            },
-            {
-              "id": "condition-2",
-              "leftValue": "={{ $json['Learned_From'] }}",
-              "rightValue": "",
-              "operator": {
-                "type": "string",
-                "operation": "isEmpty",
-                "singleValue": true
-              }
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "filter-unprocessed",
-      "name": "Filter: Commented & Not Learned",
-      "type": "n8n-nodes-base.filter",
-      "typeVersion": 2,
-      "position": [
-        680,
-        300
-      ]
-    },
-    {
-      "parameters": {
         "jsCode": "// Levenshtein distance function (most accurate edit distance)\nfunction levenshteinDistance(str1, str2) {\n  const len1 = str1.length;\n  const len2 = str2.length;\n  const matrix = [];\n\n  // Initialize matrix\n  for (let i = 0; i <= len1; i++) {\n    matrix[i] = [i];\n  }\n  for (let j = 0; j <= len2; j++) {\n    matrix[0][j] = j;\n  }\n\n  // Fill matrix\n  for (let i = 1; i <= len1; i++) {\n    for (let j = 1; j <= len2; j++) {\n      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;\n      matrix[i][j] = Math.min(\n        matrix[i - 1][j] + 1,      // deletion\n        matrix[i][j - 1] + 1,      // insertion\n        matrix[i - 1][j - 1] + cost // substitution\n      );\n    }\n  }\n\n  return matrix[len1][len2];\n}\n\n// Process each row\nconst results = [];\n\nfor (const item of $input.all()) {\n  const data = item.json;\n  \n  // Get selected draft based on SELECTED_DRAFT_NUM\n  const selectedDraftNum = parseInt(data['SELECTED DRAFT # ']) || 0;\n  let selectedDraft = '';\n  \n  if (selectedDraftNum === 1) {\n    selectedDraft = data['DRAFT 1'] || '';\n  } else if (selectedDraftNum === 2) {\n    selectedDraft = data['DRAFT 2'] || '';\n  } else if (selectedDraftNum === 3) {\n    selectedDraft = data['DRAFT 3'] || '';\n  }\n  \n  // Get posted comment\n  const postedComment = data['POSTED COMMENT'] || '';\n  \n  // Skip if either is empty\n  if (!selectedDraft || !postedComment) {\n    continue;\n  }\n  \n  // Normalize whitespace (trim and collapse multiple spaces/newlines)\n  const normalizedDraft = selectedDraft.trim().replace(/\\s+/g, ' ');\n  const normalizedComment = postedComment.trim().replace(/\\s+/g, ' ');\n  \n  // Calculate Levenshtein distance\n  const editDistance = levenshteinDistance(normalizedDraft, normalizedComment);\n  \n  // Calculate percentage (relative to final comment length)\n  const editDistancePct = (editDistance / normalizedComment.length) * 100;\n  \n  // Add to results with all necessary data\n  results.push({\n    json: {\n      // Original data\n      POST_ID: data['POST ID'],\n      VIP_NAME: data['VIP NAME'],\n      POST_CONTENTS: data['POST CONTENTS'],\n      POST_URL: data['POST URL'],\n      SELECTED_DRAFT_NUM: selectedDraftNum,\n      BAD_DRAFT: selectedDraft,\n      GOOD_COMMENT: postedComment,\n      COMMENTED_AT: data['COMMENTED AT'],\n      \n      // Calculated fields\n      EDIT_DISTANCE_PCT: Math.round(editDistancePct * 100) / 100, // Round to 2 decimals\n      LANGUAGE: data['POST CONTENTS'] ? detectLanguage(data['POST CONTENTS']) : 'EN',\n      PROCESSED_DATE: new Date().toISOString(),\n      \n      // For updating tracker\n      ROW_NUMBER: item.json.row_number || data.row_number\n    }\n  });\n}\n\n// Simple language detection (same as current system)\nfunction detectLanguage(text) {\n  const firstSentence = text.split(/[.!?]/)[0] || '';\n  const dutchWords = ['zoals', 'van', 'het', 'een', 'wat', 'die', 'voor', 'met', 'is', 'zijn', 'door', 'mijn', 'jouw', 'de', 'dat'];\n  \n  const lowerText = firstSentence.toLowerCase();\n  const hasDutch = dutchWords.some(word => lowerText.includes(` ${word} `));\n  \n  return hasDutch ? 'NL' : 'EN';\n}\n\nreturn results;"
       },
-      "id": "calculate-edit-distance",
+      "id": "5afed34f-edd4-4e65-9906-05f3e65e508d",
       "name": "Calculate Edit Distance %",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        900,
-        300
+        -448,
+        112
       ]
     },
     {
@@ -138,13 +69,13 @@
         },
         "options": {}
       },
-      "id": "check-threshold",
+      "id": "c0f2f8bb-ad27-41f1-bccf-70842d05bad3",
       "name": "IF Edit Distance > 40%",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1120,
-        300
+        -224,
+        112
       ]
     },
     {
@@ -182,17 +113,17 @@
         },
         "options": {}
       },
-      "id": "write-to-training",
+      "id": "bca46217-a236-4abe-a9b8-4f880d394e14",
       "name": "Append to Self-Learning Training",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1340,
-        200
+        0,
+        0
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
+          "id": "3ufruIOhHou2w8Za",
           "name": "Google Sheets account"
         }
       }
@@ -225,17 +156,17 @@
         },
         "options": {}
       },
-      "id": "update-tracker",
+      "id": "31688530-3c0c-47f4-91f3-847d4e8a2d3d",
       "name": "Update Comment Tracker",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1560,
-        200
+        224,
+        0
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
+          "id": "3ufruIOhHou2w8Za",
           "name": "Google Sheets account"
         }
       }
@@ -268,50 +199,115 @@
         },
         "options": {}
       },
-      "id": "mark-skipped",
+      "id": "664fd701-18a0-444c-aa59-4be4332a5b05",
       "name": "Mark as Skipped (< 40%)",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4,
       "position": [
-        1340,
-        400
+        0,
+        208
       ],
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "",
+          "id": "3ufruIOhHou2w8Za",
           "name": "Google Sheets account"
         }
       }
-    }
-  ],
-  "connections": {
-    "Schedule (Daily 2am)": {
-      "main": [
-        [
-          {
-            "node": "Read Comment Tracker",
-            "type": "main",
-            "index": 0
-          }
-        ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "daysInterval": 7
+            }
+          ]
+        }
+      },
+      "id": "50ba8ad5-5c2d-4f6c-abb6-448ce7be5bee",
+      "name": "Schedule (Weekly)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        112
       ]
     },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        320
+      ],
+      "id": "123630f9-6305-4107-9229-33273d940a6e",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "condition-1",
+              "leftValue": "={{ $json.STATUS }}",
+              "rightValue": "Commented",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "condition-2",
+              "leftValue": "={{ $json['Learned_From'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "isEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a24ddd2f-20e1-48d7-a4fa-d91ae6bae51a",
+      "name": "Filter: Commented",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## TO DO\n* Ensure to dedupe before learning or to update status after learning in comment tracker\n\n"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -720,
+        416
+      ],
+      "typeVersion": 1,
+      "id": "0dc4b21e-3ec1-4c7f-acee-1293afea75f4",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
     "Read Comment Tracker": {
       "main": [
         [
           {
-            "node": "Filter: Commented & Not Learned",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Filter: Commented & Not Learned": {
-      "main": [
-        [
-          {
-            "node": "Calculate Edit Distance %",
+            "node": "Filter: Commented",
             "type": "main",
             "index": 0
           }
@@ -357,15 +353,50 @@
           }
         ]
       ]
+    },
+    "Schedule (Weekly)": {
+      "main": [
+        [
+          {
+            "node": "Read Comment Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read Comment Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Commented": {
+      "main": [
+        [
+          {
+            "node": "Calculate Edit Distance %",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "pinData": {},
+  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "staticData": null,
-  "tags": [],
-  "triggerCount": 1,
-  "updatedAt": "2025-12-13T00:00:00.000Z",
-  "versionId": ""
+  "versionId": "7d1650a8-7cd1-4dd3-9208-a7e5b4f132c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3544f5c37f73a751dffe3a575db3409945a8c0e3401cb35ea2d58e80aeff7724"
+  },
+  "id": "wKlmmi3FhUKafrpA",
+  "tags": []
 }
