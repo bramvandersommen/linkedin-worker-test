@@ -118,7 +118,9 @@ The script automatically loads your VIP list from `vip-config.js` (hosted on Git
 
 ### Step 4: Open Worker Dashboard
 
-Navigate to: `https://{{GITHUB_USERNAME}}.github.io/{{REPO_NAME}}/linkedin_worker.html`
+Navigate to: `https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html`
+
+(Note: This will be moved to a custom domain later)
 
 Bookmark this page for quick access.
 
@@ -175,7 +177,7 @@ VIPs are stored in **Google Sheets** (auto-syncs hourly):
 
 | VIP Name | LinkedIn URL | LinkedIn ID | Active | Relationship Notes |
 |----------|--------------|-------------|--------|--------------------|
-| {{VIP_EXAMPLE_NAME}} | {{VIP_EXAMPLE_URL}} | {{VIP_EXAMPLE_ID}} | YES | {{VIP_EXAMPLE_RELATIONSHIP}} |
+| John Doe | https://linkedin.com/in/john-doe | john-doe | YES | Former colleague, industry expert |
 
 **Relationship Notes** are automatically merged into AI context for personalized comments.
 
@@ -473,7 +475,6 @@ docs: Update README with self-learning details
 ## 📞 Support
 
 **Developer:** Bram van der Sommen (OffhoursAI)
-**Client:** Patrick Huijs
 **Repository:** https://github.com/bramvandersommen/linkedin-worker-test
 
 For issues or questions, check the troubleshooting section above or review the technical documentation in `.claude/PROJECT_CONTEXT.md`.

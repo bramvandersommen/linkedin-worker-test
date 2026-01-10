@@ -731,6 +731,38 @@
     let allEnrichedPosts = [];
     const seenPostIds = new Set();
 
+    // Format date to dd/mm/yyyy HH:mm CET
+    function formatDraftedDate(dateString) {
+      if (!dateString) return 'N/A';
+
+      try {
+        const date = new Date(dateString);
+
+        // Convert to CET (UTC+1, or UTC+2 during DST)
+        const cetFormatter = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Europe/Paris', // CET timezone
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        });
+
+        const parts = cetFormatter.formatToParts(date);
+        const day = parts.find(p => p.type === 'day').value;
+        const month = parts.find(p => p.type === 'month').value;
+        const year = parts.find(p => p.type === 'year').value;
+        const hour = parts.find(p => p.type === 'hour').value;
+        const minute = parts.find(p => p.type === 'minute').value;
+
+        return `${day}/${month}/${year} ${hour}:${minute} CET`;
+      } catch (error) {
+        console.error('[Worker] Error formatting date:', error);
+        return 'Invalid date';
+      }
+    }
+
     // Track if initial load is complete
     let initialLoadComplete = false;
     let queuedMessages = [];
@@ -986,17 +1018,19 @@
       const formatLineBreaks = (text) => {
         if (!text) return '';
         return text
-          .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')  // **bold** → <strong>bold</strong>
+          .replace(/<b>(.+?)<\/b>/g, '<strong>$1</strong>')  // <b>text</b> → <strong>text</strong>
+          .replace(/<i>(.+?)<\/i>/g, '<em>$1</em>')          // <i>text</i> → <em>text</em>
           .replace(/\n/g, '<br>');                            // \n → <br>
       };
 
       const contentPreview = post.POST_CONTENTS.substring(0, 150);
       const isLongContent = post.POST_CONTENTS.length > 150;
+      const draftedAtFormatted = formatDraftedDate(post.PROCESSED_AT);
 
       card.innerHTML = `
         <div class="result-header">
           <h2 class="result-vip">${post.VIP_NAME}</h2>
-          <div class="result-meta">Post ID: ${post.POST_ID}</div>
+          <div class="result-meta">Post ID: ${post.POST_ID} • Drafted at: ${draftedAtFormatted}</div>
         </div>
         
         <blockquote class="result-content ${isLongContent ? 'collapsed' : ''}" data-full-content="${post.POST_CONTENTS.replace(/"/g, '&quot;')}" data-expanded="false">
@@ -1209,7 +1243,7 @@
         if (queuedMessages.length > 0) {
           console.log('[Worker] 📤 Processing', queuedMessages.length, 'queued message(s)');
           for (const msg of queuedMessages) {
-            await processAllPosts(msg.posts, msg.source, msg.origin);
+            await processAllPosts(msg.posts);
           }
           queuedMessages = [];
         }
@@ -1299,7 +1333,8 @@
         DRAFT_2: post.DRAFT_2 || post.draft2 || '',
         DRAFT_3: post.DRAFT_3 || post.draft3 || '',
         PROFILE_URL: post.PROFILE_URL || post.profileURL || '',
-        VIP_RELATIONSHIP: post.VIP_RELATIONSHIP || post.vipRelationshipNotes || ''
+        VIP_RELATIONSHIP: post.VIP_RELATIONSHIP || post.vipRelationshipNotes || '',
+        PROCESSED_AT: post.PROCESSED_AT || post.processedAt || post.DRAFTED_AT || post.draftedAt || null
       }));
 
       displayResults(enrichedPosts);
@@ -1310,7 +1345,7 @@
       return enrichedPosts;
     }
 
-    async function processAllPosts(posts, eventSource, eventOrigin) {
+    async function processAllPosts(posts) {
       console.log('[Worker] 🔍 Processing', posts.length, 'incoming posts from new scrape session...');
 
       // OPTION C: Reset seenPostIds for new scraping session
@@ -1336,14 +1371,6 @@
       if (newPosts.length === 0) {
         updateStatus(`⏭️ All ${posts.length} posts already processed`);
         updateStats(allEnrichedPosts.length, skippedTotal, 0, allEnrichedPosts.length);
-        
-        if (eventSource) {
-          eventSource.postMessage({
-            type: 'AI_RESPONSES',
-            posts: allEnrichedPosts,
-            timestamp: Date.now()
-          }, eventOrigin);
-        }
         return;
       }
       
@@ -1374,15 +1401,7 @@
         updateProgress(0, 0, 0);
         updateStatus(`✅ ${allEnrichedPosts.length} drafts ready! (${skippedTotal} skipped)`);
         updateStats(allEnrichedPosts.length, skippedTotal, 0, allEnrichedPosts.length);
-        
-        if (eventSource) {
-          eventSource.postMessage({
-            type: 'AI_RESPONSES',
-            posts: allEnrichedPosts,
-            timestamp: Date.now()
-          }, eventOrigin);
-        }
-        
+
       } catch (error) {
         updateProgress(0, 0, 0);
         console.error('[Worker] Processing error:', error);
@@ -1420,13 +1439,6 @@
 
         // Show error banner WITHOUT clearing existing drafts
         showErrorBanner(displayErrorData);
-
-        if (eventSource) {
-          eventSource.postMessage({
-            type: 'ERROR',
-            message: error.message
-          }, eventOrigin);
-        }
       }
     }
 
@@ -1443,12 +1455,12 @@
         // Wait for initial load to complete before processing
         if (!initialLoadComplete) {
           console.log('[Worker] ⏳ Queueing posts until initial load completes...');
-          queuedMessages.push({ posts, source: event.source, origin: event.origin });
+          queuedMessages.push({ posts });
           return;
         }
 
         // Process through existing workflow (batching, fake progress, N8N, display)
-        await processAllPosts(posts, event.source, event.origin);
+        await processAllPosts(posts);
       }
     });
 
