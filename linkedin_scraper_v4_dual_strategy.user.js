@@ -779,16 +779,21 @@
                     const contentStrategies = [
                         () => {
                             const contentDiv = card.querySelector('.update-components-text .break-words > span[dir="ltr"]');
+                            console.log('[Content Strategy 1] Found element:', !!contentDiv);
                             if (contentDiv) {
+                                console.log('[Content Strategy 1] innerHTML length:', contentDiv.innerHTML?.length || 0);
+                                console.log('[Content Strategy 1] innerHTML preview:', contentDiv.innerHTML?.substring(0, 100));
                                 return Utils.convertHtmlToText(contentDiv.innerHTML);
                             }
                         },
                         () => {
                             const contentDiv = card.querySelector('.feed-shared-text');
+                            console.log('[Content Strategy 2] Found element:', !!contentDiv);
                             return contentDiv?.textContent.trim() || '';
                         },
                         () => {
                             const contentDiv = card.querySelector('[data-test-id="main-feed-activity-card__commentary"]');
+                            console.log('[Content Strategy 3] Found element:', !!contentDiv);
                             return contentDiv?.textContent.trim() || '';
                         }
                     ];
