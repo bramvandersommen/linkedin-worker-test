@@ -40,7 +40,8 @@
     // ═════════════════════════════════════════════════════════════════════════════
 
     const CONFIG = {
-        WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/linkedin_worker.html',
+        WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/worker.html',
+        N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
         MAX_POSTS: 10,  // Limit number of posts to scrape (for testing)
         ENABLE_NOTIFICATIONS_FALLBACK: false,  // Disable notifications scraping (VIP search only)
         VIP_LIST: [
@@ -109,131 +110,69 @@
         },
 
         convertHtmlToText(html) {
-            // Use DOMParser instead of innerHTML to avoid sanitization warnings
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(`<div>${html}</div>`, 'text/html');
-            const temp = doc.body.firstChild;
+            const temp = document.createElement('div');
+            temp.innerHTML = html;
 
-            if (!temp) {
-                console.warn('[convertHtmlToText] Failed to parse HTML');
-                return html; // Fallback to original
-            }
-
-            let result = '';
-            let brCount = 0;
-
-            // Recursive tree walker - manually traverse DOM and build text with formatting
-            function walk(node) {
-                // Skip comment nodes
-                if (node.nodeType === Node.COMMENT_NODE) {
-                    return;
+            // Preserve paragraph spacing
+            temp.querySelectorAll('p').forEach((p, index) => {
+                // Add double newline after each paragraph (except inline handling)
+                if (p.nextSibling) {
+                    p.insertAdjacentText('afterend', '\n\n');
                 }
+            });
 
-                // Text node - add content
-                if (node.nodeType === Node.TEXT_NODE) {
-                    const text = node.textContent;
-                    // Only add if not just whitespace, unless it's a single space
-                    if (text.trim() || text === ' ') {
-                        result += text;
-                    }
-                    return;
-                }
+            // Replace <br> with newlines BEFORE extracting text
+            temp.querySelectorAll('br').forEach(br => {
+                br.replaceWith('\n');
+            });
 
-                // Element node
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    const tagName = node.tagName.toLowerCase();
+            // Keep bold formatting with markdown-style **text**
+            temp.querySelectorAll('strong, b').forEach(el => {
+                el.replaceWith(`**${el.textContent}**`);
+            });
 
-                    // Handle line breaks
-                    if (tagName === 'br') {
-                        result += '\n';
-                        brCount++;
-                        return;
-                    }
+            // Replace links but keep text content
+            temp.querySelectorAll('a').forEach(a => {
+                a.replaceWith(a.textContent);
+            });
 
-                    // Handle paragraphs - add newlines before/after
-                    if (tagName === 'p') {
-                        if (result && !result.endsWith('\n')) {
-                            result += '\n\n';
-                        }
-                        for (const child of node.childNodes) {
-                            walk(child);
-                        }
-                        result += '\n\n';
-                        return;
-                    }
+            // Get text content with preserved line breaks
+            let text = temp.textContent;
 
-                    // Handle bold - wrap with <b> tags
-                    if (tagName === 'strong' || tagName === 'b') {
-                        result += '<b>';
-                        for (const child of node.childNodes) {
-                            walk(child);
-                        }
-                        result += '</b>';
-                        return;
-                    }
+            // Clean up HTML comments
+            text = text.replace(/<!--.*?-->/g, '');
 
-                    // Handle italic - wrap with <i> tags
-                    if (tagName === 'em' || tagName === 'i') {
-                        result += '<i>';
-                        for (const child of node.childNodes) {
-                            walk(child);
-                        }
-                        result += '</i>';
-                        return;
-                    }
-
-                    // Handle links - just extract text
-                    if (tagName === 'a') {
-                        for (const child of node.childNodes) {
-                            walk(child);
-                        }
-                        return;
-                    }
-
-                    // Handle divs and spans - just process children
-                    if (tagName === 'div' || tagName === 'span') {
-                        for (const child of node.childNodes) {
-                            walk(child);
-                        }
-                        return;
-                    }
-
-                    // Default: process all children
-                    for (const child of node.childNodes) {
-                        walk(child);
-                    }
-                }
-            }
-
-            // Start walking from temp container
-            for (const child of temp.childNodes) {
-                walk(child);
-            }
-
-            // Clean up the result
-            let text = result;
-
-            // Normalize whitespace: trim each line, remove excessive blank lines
+            // Preserve all intentional line breaks, only remove excessive spaces on same line
             text = text
                 .split('\n')
-                .map(line => line.trim())
-                .filter((line, index, arr) => {
-                    // Remove excessive blank lines (max 1 consecutive blank line)
-                    if (line === '') {
-                        return index === 0 || arr[index - 1] !== '';
-                    }
-                    return true;
-                })
-                .join('\n');
+                .map(line => line.trim())  // Trim each line individually
+                .join('\n');               // Rejoin with newlines
 
-            // Remove leading/trailing blank lines
+            // Remove leading/trailing blank lines only
             text = text.replace(/^\n+/, '').replace(/\n+$/, '');
 
-            // Debug logging
-            console.log(`[convertHtmlToText] Found ${brCount} <br> tags, result has ${(text.match(/\n/g) || []).length} newlines`);
-            console.log('[convertHtmlToText] First 200 chars:', text.substring(0, 200));
-
             return text;
+        },
+
+        async trackComment(data) {
+            try {
+                await fetch(CONFIG.N8N_TRACKER_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        postID: data.postID,
+                        vipName: data.vipName,
+                        commentedAt: new Date().toISOString(),
+                        draftUsed: data.draftIndex,
+                        finalComment: data.finalComment,
+                        manualEdits: data.manualEdits,
+                        originalDraft: data.originalDraft
+                    })
+                });
+                console.log('[LinkedIn AI] Comment tracked successfully');
+            } catch (error) {
+                console.warn('[LinkedIn AI] Failed to track comment:', error);
+            }
         }
     };
 
@@ -548,35 +487,12 @@
             // Scroll to load all posts (infinite scroll handling)
             onProgress?.('📜 Loading all posts...');
 
-            let noNewPostsCount = 0;
+            let previousHeight = 0;
+            let stableCount = 0;
             const maxRounds = 10;
 
-            // Helper function to count posts
-            function countPosts() {
-                const strategies = [
-                    () => container.querySelectorAll('.feed-shared-update-v2').length,
-                    () => container.querySelectorAll('[data-urn*="activity"]').length,
-                    () => {
-                        const ul = container.querySelector('ul[role="list"]');
-                        return ul ? ul.querySelectorAll('li').length : 0;
-                    }
-                ];
-
-                for (const strategy of strategies) {
-                    try {
-                        const count = strategy();
-                        if (count > 0) return count;
-                    } catch (err) {
-                        continue;
-                    }
-                }
-                return 0;
-            }
-
             for (let round = 1; round <= maxRounds; round++) {
-                // Count posts before scrolling
-                const postCountBefore = countPosts();
-                onProgress?.(`📜 Round ${round}/${maxRounds}: ${postCountBefore} posts loaded...`);
+                onProgress?.(`📜 Round ${round}/${maxRounds}: Scrolling...`);
 
                 // Smooth scroll to bottom
                 const start = window.scrollY;
@@ -598,22 +514,21 @@
                 // Wait for content to load
                 await Utils.randomPause(800, 1200);
 
-                // Count posts after scrolling
-                const postCountAfter = countPosts();
-
-                // Check if new posts were loaded
-                if (postCountAfter === postCountBefore) {
-                    noNewPostsCount++;
-                    if (noNewPostsCount >= 2) {
-                        onProgress?.(`✓ All content loaded (${postCountAfter} posts, round ${round})`);
+                // Check if page height changed
+                const currentHeight = document.body.scrollHeight;
+                if (currentHeight === previousHeight) {
+                    stableCount++;
+                    if (stableCount >= 2) {
+                        onProgress?.(`✓ All content loaded (round ${round})`);
                         break;
                     }
                 } else {
-                    noNewPostsCount = 0;
+                    stableCount = 0;
+                    previousHeight = currentHeight;
                 }
 
                 if (round === maxRounds) {
-                    onProgress?.(`✓ Reached max scroll depth (${postCountAfter} posts)`);
+                    onProgress?.('✓ Reached max scroll depth');
                 }
             }
 
@@ -779,21 +694,16 @@
                     const contentStrategies = [
                         () => {
                             const contentDiv = card.querySelector('.update-components-text .break-words > span[dir="ltr"]');
-                            console.log('[Content Strategy 1] Found element:', !!contentDiv);
                             if (contentDiv) {
-                                console.log('[Content Strategy 1] innerHTML length:', contentDiv.innerHTML?.length || 0);
-                                console.log('[Content Strategy 1] innerHTML preview:', contentDiv.innerHTML?.substring(0, 100));
                                 return Utils.convertHtmlToText(contentDiv.innerHTML);
                             }
                         },
                         () => {
                             const contentDiv = card.querySelector('.feed-shared-text');
-                            console.log('[Content Strategy 2] Found element:', !!contentDiv);
                             return contentDiv?.textContent.trim() || '';
                         },
                         () => {
                             const contentDiv = card.querySelector('[data-test-id="main-feed-activity-card__commentary"]');
-                            console.log('[Content Strategy 3] Found element:', !!contentDiv);
                             return contentDiv?.textContent.trim() || '';
                         }
                     ];
@@ -1410,6 +1320,7 @@
                     timestamp: Date.now()
                 }, workerOrigin);
                 console.log('[LinkedIn AI] Sent VIP_QUEUE with', serializablePosts.length, 'posts');
+                console.log('Scraped: ', serializablePosts);
 
                 updateStatus('✅ Posts sent to worker!');
 
@@ -1440,6 +1351,13 @@
                 }, 5000);
             }
         }
+
+        window.addEventListener('message', (event) => {
+            if (!event.origin.includes(new URL(CONFIG.WORKER_URL).origin)) return;
+            if (event.data.type === 'AI_RESPONSES') {
+                console.log('[LinkedIn AI] ✅ Received AI responses:', event.data.posts);
+            }
+        });
 
         createEnhancedFAB();
         console.log(`[LinkedIn AI] 💡 Click the button to scan for VIP posts (${PAGE_TYPE} mode)`);
