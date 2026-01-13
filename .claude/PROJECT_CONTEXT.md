@@ -2,8 +2,75 @@
 
 **Project:** Autonomous LinkedIn Comment Automation with Self-Learning AI
 **Client:** Patrick Huijs (OffhoursAI customer)
-**Status:** Self-Learning System COMPLETE ✅ | Analytics System IN PLANNING 🎯
-**Last Updated:** December 16, 2025
+**Status:** Production Ready ✅ | Self-Learning Complete ✅ | Analytics Planned 🎯
+**Last Updated:** January 13, 2026
+**Current Version:** Userscript v4.5 | Worker v10.13
+
+---
+
+## 📦 Deployment & Project Structure
+
+### Repository Structure
+
+**linkedin-worker-test/ (Development)**
+- Primary development repository
+- GitHub Pages: https://bramvandersommen.github.io/linkedin-worker-test/
+- Contains source files and internal documentation
+
+**offhours-oasis-landing/ (Production)**
+- Landing page + production worker files
+- Deployed via Lovable: https://offhoursai.com
+- Worker files at: /client/phuys/m8kP3vN7xQ2wR9sL/
+
+### Deployment Workflow
+
+**Worker Files (linkedin-scraper.user.js, worker.html):**
+```bash
+# 1. Develop in linkedin-worker-test/
+# 2. Test on GitHub Pages
+# 3. Deploy to production:
+cd ~/linkedin-worker-test
+./deploy-to-prod.sh
+# Script automatically:
+#   - Reads version from production (accurate tracking)
+#   - Swaps URLs (GitHub Pages → offhoursai.com)
+#   - Fixes asset paths (relative → absolute)
+#   - Removes @require dependencies
+#   - Shows diffs for review
+#   - Commits to offhours-oasis-landing repo
+
+# 4. Push to Lovable:
+cd ~/offhours-oasis-landing
+git push origin main
+# Wait for Lovable sync → Click Publish
+```
+
+**Documentation & Site Changes:**
+```bash
+# Edit directly in offhours-oasis-landing/
+cd ~/offhours-oasis-landing
+# Make changes to docs or site
+git add -A
+git commit -m "Update docs"
+git push origin main
+# Wait for Lovable sync → Click Publish
+```
+
+### Client Documentation System
+
+**Location:** `offhours-oasis-landing/public/client/phuys/m8kP3vN7xQ2wR9sL/docs/`
+
+**Viewer:** https://offhoursai.com/client/phuys/docs/{slug}
+- Password: `phuys2026`
+- Branded MD formatting with dark theme
+- Reuses proposal-preview parser
+
+**Available Docs:**
+- `/client/phuys/docs/user-guide` (CLIENT_USER_GUIDE.md)
+- `/client/phuys/docs/installation-guide` (INSTALLATION_GUIDE.md)
+- `/client/phuys/docs/features` (FEATURES_AND_VALUE.md)
+
+**Configuration:** `src/lib/clientDocsConfig.ts`
 
 ---
 
