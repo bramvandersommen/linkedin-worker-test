@@ -4,7 +4,6 @@
 // @version      4.3
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
 // @match        *://*.linkedin.com/*
-// @require      https://bramvandersommen.github.io/linkedin-worker-test/vip-config.js
 // @run-at       document-end
 // @grant        none
 // ==/UserScript==
