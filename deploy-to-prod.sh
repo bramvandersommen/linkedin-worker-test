@@ -199,7 +199,7 @@ if ! grep -q "@downloadURL" "${TEMP_USERSCRIPT}"; then
 " "${TEMP_USERSCRIPT}"
 fi
 
-print_success "Userscript processed (URLs swapped, @require removed)"
+print_success "Userscript processed"
 
 print_info "Processing worker.html..."
 
@@ -216,7 +216,7 @@ sed -e "s|${DEV_BASE_URL}|${PROD_BASE_URL}|g" \
     -e 's|href="img/site\.webmanifest"|href="/client/phuys/m8kP3vN7xQ2wR9sL/img/site.webmanifest"|g' \
     "${DEV_WORKER}" > "${TEMP_WORKER}"
 
-print_success "Worker processed (URLs swapped, favicon paths fixed)"
+print_success "Worker processed"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Show Diff
