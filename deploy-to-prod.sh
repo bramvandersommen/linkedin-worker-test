@@ -261,13 +261,9 @@ diff -u "${PROD_WORKER}" "${TEMP_WORKER}" 2>/dev/null | head -30 || true
 print_header "Step 5: Confirmation"
 
 echo -e "${YELLOW}Ready to deploy:${NC}"
-echo "  • Version: ${CURRENT_VERSION} → ${NEW_VERSION}"
+echo "  • Version: ${PROD_VERSION} → ${NEW_VERSION}"
 echo "  • From: linkedin-worker-test/ (dev)"
 echo "  • To:   offhours-oasis-landing/${PROD_PATH}/ (prod)"
-echo ""
-echo -e "${YELLOW}Changes:${NC}"
-echo "  ✓ Scraper: URLs swapped, @require removed, auto-update enabled"
-echo "  ✓ Worker: URLs swapped for cross-window communication"
 echo ""
 
 echo -ne "${YELLOW}Proceed with deployment? [y/N]: ${NC}"
