@@ -118,35 +118,45 @@ print_success "Found worker.html in dev repo"
 
 print_header "Step 2: Version Management"
 
-# Extract current version from dev userscript
-CURRENT_VERSION=$(grep -m 1 "@version" "${DEV_USERSCRIPT}" | sed -E 's/.*@version[[:space:]]+([0-9.]+).*/\1/')
+# Extract current version from PRODUCTION (what's live now)
+PROD_VERSION=$(grep -m 1 "@version" "${PROD_USERSCRIPT}" | sed -E 's/.*@version[[:space:]]+([0-9.]+).*/\1/')
+# Extract current version from DEV (what we're deploying)
+DEV_VERSION=$(grep -m 1 "@version" "${DEV_USERSCRIPT}" | sed -E 's/.*@version[[:space:]]+([0-9.]+).*/\1/')
 
-if [[ -z "${CURRENT_VERSION}" ]]; then
-    print_error "Could not extract version from ${DEV_USERSCRIPT}"
+if [[ -z "${PROD_VERSION}" ]]; then
+    print_error "Could not extract version from production ${PROD_USERSCRIPT}"
     exit 1
 fi
 
-print_info "Current version: ${CURRENT_VERSION}"
+if [[ -z "${DEV_VERSION}" ]]; then
+    print_error "Could not extract version from dev ${DEV_USERSCRIPT}"
+    exit 1
+fi
 
-# Increment version (simple patch increment)
-IFS='.' read -ra VERSION_PARTS <<< "${CURRENT_VERSION}"
+print_info "Production version: ${PROD_VERSION}"
+print_info "Dev version: ${DEV_VERSION}"
+
+# Increment version from production (simple patch increment)
+IFS='.' read -ra VERSION_PARTS <<< "${PROD_VERSION}"
 MAJOR="${VERSION_PARTS[0]}"
 MINOR="${VERSION_PARTS[1]}"
 
 # Increment minor version
 NEW_MINOR=$((MINOR + 1))
-NEW_VERSION="${MAJOR}.${NEW_MINOR}"
+SUGGESTED_VERSION="${MAJOR}.${NEW_MINOR}"
 
-print_info "Suggested version: ${NEW_VERSION}"
+print_info "Suggested version: ${SUGGESTED_VERSION}"
 
 # Ask for confirmation on version
-echo -ne "${YELLOW}Use version ${NEW_VERSION}? [Y/n]: ${NC}"
+echo -ne "${YELLOW}Use version ${SUGGESTED_VERSION}? [Y/n]: ${NC}"
 read -r VERSION_CONFIRM
 
 if [[ "${VERSION_CONFIRM}" =~ ^[Nn]$ ]]; then
     echo -ne "${YELLOW}Enter custom version (e.g., 4.5): ${NC}"
     read -r CUSTOM_VERSION
     NEW_VERSION="${CUSTOM_VERSION}"
+else
+    NEW_VERSION="${SUGGESTED_VERSION}"
 fi
 
 print_success "Version set to: ${NEW_VERSION}"
@@ -214,12 +224,23 @@ print_success "Worker processed (URLs swapped, favicon paths fixed)"
 
 print_header "Step 4: Review Changes"
 
+# Check if there are actual changes
+USERSCRIPT_DIFF=$(diff -q "${PROD_USERSCRIPT}" "${TEMP_USERSCRIPT}" 2>/dev/null || echo "different")
+WORKER_DIFF=$(diff -q "${PROD_WORKER}" "${TEMP_WORKER}" 2>/dev/null || echo "different")
+
+if [[ "${USERSCRIPT_DIFF}" == "" && "${WORKER_DIFF}" == "" ]]; then
+    print_warning "No changes detected between dev and production!"
+    print_info "Dev and production files are identical. Nothing to deploy."
+    rm -rf "${TEMP_DIR}"
+    exit 0
+fi
+
 print_info "Changes in linkedin-scraper.user.js:"
 echo ""
 
 # Show key changes
 echo -e "${YELLOW}Version:${NC}"
-echo "  ${CURRENT_VERSION} → ${NEW_VERSION}"
+echo "  ${PROD_VERSION} (prod) → ${NEW_VERSION} (deploying)"
 echo ""
 
 echo -e "${YELLOW}WORKER_URL:${NC}"
@@ -227,16 +248,13 @@ echo "  Old: ${DEV_WORKER_URL}"
 echo "  New: ${PROD_WORKER_URL}"
 echo ""
 
-echo -e "${YELLOW}@require line:${NC}"
-echo "  Removed: @require vip-config.js (VIP list now embedded)"
+echo -e "${YELLOW}Transformations:${NC}"
+echo "  • @require vip-config.js removed (VIP list embedded)"
+echo "  • @updateURL and @downloadURL added/updated"
 echo ""
 
-echo -e "${YELLOW}Auto-update URLs:${NC}"
-echo "  Added/Updated: @updateURL and @downloadURL"
-echo ""
-
-# Show actual diff (first 30 lines)
-print_info "Diff preview (first 50 lines):"
+# Show actual diff (first 50 lines)
+print_info "Userscript diff (first 50 lines):"
 diff -u "${PROD_USERSCRIPT}" "${TEMP_USERSCRIPT}" 2>/dev/null | head -50 || true
 
 echo ""
@@ -244,14 +262,15 @@ echo ""
 print_info "Changes in worker.html:"
 echo ""
 
-echo -e "${YELLOW}URL References:${NC}"
-echo "  All GitHub Pages URLs → offhoursai.com"
-echo "  Asset paths updated for img/ folder"
+echo -e "${YELLOW}Transformations Applied:${NC}"
+echo "  • GitHub Pages URLs → offhoursai.com"
+echo "  • Relative favicon paths → absolute paths"
+echo "  • img/favicon.ico → /client/phuys/.../img/favicon.ico"
 echo ""
 
-# Count URL changes in worker
-WORKER_CHANGES=$(diff -u "${PROD_WORKER}" "${TEMP_WORKER}" 2>/dev/null | grep -c "^+" || echo "0")
-print_info "Worker diff: ~${WORKER_CHANGES} lines changed"
+# Show actual worker diff (first 30 lines)
+print_info "Worker.html diff (first 30 lines):"
+diff -u "${PROD_WORKER}" "${TEMP_WORKER}" 2>/dev/null | head -30 || true
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Confirmation
@@ -330,9 +349,10 @@ git add "${PROD_PATH}"
 # Create commit message
 COMMIT_MSG="Update LinkedIn worker to v${NEW_VERSION}
 
-- Update userscript from v${CURRENT_VERSION} to v${NEW_VERSION}
-- Swap WORKER_URL to production domain
+- Update userscript from v${PROD_VERSION} to v${NEW_VERSION}
+- Swap WORKER_URL to production domain (offhoursai.com)
 - Update worker.html URLs for cross-window communication
+- Fix favicon paths (relative → absolute for production)
 - Remove @require dependency (VIP config embedded)
 - Add @updateURL and @downloadURL for auto-updates
 
