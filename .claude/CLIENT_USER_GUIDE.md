@@ -251,20 +251,13 @@ A new window opens showing:
 ### Support Contacts
 
 **Technical Issues:**
-- Email: bram@offhoursai.com
+- Email: hello@offhoursai.com
 - Response time: Within 24 hours
 
 **Voice Tuning:**
 - Schedule voice tuning session (Week 2-3 recommended)
 - Takes 30-45 minutes
 - Optimizes AI to match your style
-
-### Useful Links
-
-**Documentation:**
-- [Technical Docs](../PROJECT_CONTEXT.md) (for developers)
-- [Feature Details](../FEATURES_AND_VALUE.md) (comprehensive list)
-- [Testing Guide](../SELF_HEALING_TESTS.md) (for troubleshooting)
 
 **System URLs:**
 - Worker: https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/worker.html
@@ -352,27 +345,6 @@ A new window opens showing:
 
 ---
 
-## Version History
-
-### v4.4 (January 13, 2026) - Current
-- Removed external @require dependency
-- Embedded VIP list for reliability
-- Added auto-update URLs
-- Improved deployment workflow
-
-### v4.3 (January 12, 2026)
-- Dual-strategy scraper (VIP search + notifications fallback)
-- Self-healing extraction (6 strategies per field)
-- Improved error handling with actionable messages
-
-### v4.0 (December 2024)
-- Major rewrite with Strategy Pattern
-- VIP Search Results as primary scraper
-- HTML formatting preservation
-- Automatic fallback system
-
----
-
 ## Quick Reference Card
 
 ```
@@ -389,11 +361,11 @@ A new window opens showing:
 └─────────────────────────────────────────────────────────────┘
 
 Worker URL: offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/worker.html
-Support: bram@offhoursai.com
+Support: hello@offhoursai.com
 ```
 
 ---
 
 **🎉 You're all set! Enjoy your AI-powered LinkedIn engagement system.**
 
-*Questions? Feedback? Contact support at bram@offhoursai.com*
+*Questions? Feedback? Contact support at hello@offhoursai.com*

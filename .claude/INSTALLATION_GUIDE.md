@@ -427,14 +427,14 @@ By end of installation session, confirm:
 - Screenshot the error
 - Check console (F12) for messages
 - Note exact steps that led to issue
-- Contact: bram@offhoursai.com
+- Contact: hello@offhoursai.com
 
 ### After Installation
 
 **For Patrick:**
 - [Client User Guide](./CLIENT_USER_GUIDE.md) - Daily usage guide
 - [Google Sheets](INSERT_URL) - View tracking data
-- Email support: bram@offhoursai.com
+- Email support: hello@offhoursai.com
 
 **For You:**
 - [Technical Docs](./PROJECT_CONTEXT.md) - Full system documentation
@@ -484,7 +484,7 @@ Keyboard Shortcuts:
 • F12 - Open console (troubleshooting)
 
 Support:
-• Email: bram@offhoursai.com
+• Email: hello@offhoursai.com
 • Response: Within 24 hours
 • User Guide: See CLIENT_USER_GUIDE.md
 ```
@@ -493,4 +493,4 @@ Support:
 
 **Ready for tomorrow's installation? Print this guide or keep it open during the session with Patrick.**
 
-*Questions? Contact bram@offhoursai.com*
+*Questions? Contact hello@offhoursai.com*

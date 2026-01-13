@@ -197,12 +197,16 @@ print_info "Processing worker.html..."
 # 1. Swap any references to GitHub Pages URLs
 # 2. Update asset paths if needed (img/ folder)
 # 3. Ensure CORS/origin references point to prod domain
+# 4. Fix favicon paths (relative → absolute for production)
 
 sed -e "s|${DEV_BASE_URL}|${PROD_BASE_URL}|g" \
     -e "s|bramvandersommen\.github\.io/linkedin-worker-test|offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL|g" \
+    -e 's|href="img/favicon|href="/client/phuys/m8kP3vN7xQ2wR9sL/img/favicon|g' \
+    -e 's|href="img/apple-touch-icon|href="/client/phuys/m8kP3vN7xQ2wR9sL/img/apple-touch-icon|g' \
+    -e 's|href="img/site\.webmanifest"|href="/client/phuys/m8kP3vN7xQ2wR9sL/img/site.webmanifest"|g' \
     "${DEV_WORKER}" > "${TEMP_WORKER}"
 
-print_success "Worker processed (URLs swapped for communication)"
+print_success "Worker processed (URLs swapped, favicon paths fixed)"
 
 # ═══════════════════════════════════════════════════════════════════════════
 # Show Diff
