@@ -235,41 +235,23 @@ if [[ "${USERSCRIPT_DIFF}" == "" && "${WORKER_DIFF}" == "" ]]; then
     exit 0
 fi
 
-print_info "Changes in linkedin-scraper.user.js:"
+print_info "Deployment summary:"
 echo ""
-
-# Show key changes
 echo -e "${YELLOW}Version:${NC}"
-echo "  ${PROD_VERSION} (prod) → ${NEW_VERSION} (deploying)"
+echo "  ${PROD_VERSION} (prod) → ${NEW_VERSION} (new)"
+echo ""
+echo -e "${YELLOW}URL transformation:${NC}"
+echo "  ${DEV_WORKER_URL}"
+echo "  → ${PROD_WORKER_URL}"
 echo ""
 
-echo -e "${YELLOW}WORKER_URL:${NC}"
-echo "  Old: ${DEV_WORKER_URL}"
-echo "  New: ${PROD_WORKER_URL}"
-echo ""
-
-echo -e "${YELLOW}Transformations:${NC}"
-echo "  • @require vip-config.js removed (VIP list embedded)"
-echo "  • @updateURL and @downloadURL added/updated"
-echo ""
-
-# Show actual diff (first 50 lines)
-print_info "Userscript diff (first 50 lines):"
+# Show actual diffs
+print_info "linkedin-scraper.user.js changes:"
 diff -u "${PROD_USERSCRIPT}" "${TEMP_USERSCRIPT}" 2>/dev/null | head -50 || true
 
 echo ""
 echo ""
-print_info "Changes in worker.html:"
-echo ""
-
-echo -e "${YELLOW}Transformations Applied:${NC}"
-echo "  • GitHub Pages URLs → offhoursai.com"
-echo "  • Relative favicon paths → absolute paths"
-echo "  • img/favicon.ico → /client/phuys/.../img/favicon.ico"
-echo ""
-
-# Show actual worker diff (first 30 lines)
-print_info "Worker.html diff (first 30 lines):"
+print_info "worker.html changes:"
 diff -u "${PROD_WORKER}" "${TEMP_WORKER}" 2>/dev/null | head -30 || true
 
 # ═══════════════════════════════════════════════════════════════════════════
