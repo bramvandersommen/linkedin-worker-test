@@ -77,10 +77,40 @@ print_info() {
 }
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Pull Latest Changes
+# ═══════════════════════════════════════════════════════════════════════════
+
+print_header "Step 1: Pull Latest Changes"
+
+print_info "Checking production repo for latest changes..."
+
+cd "${PROD_REPO}"
+
+# Check if production repo has uncommitted changes
+if [[ -n $(git status --porcelain) ]]; then
+    print_error "Production repo has uncommitted changes!"
+    print_info "Please commit or stash changes before deploying:"
+    git status --short
+    exit 1
+fi
+print_success "Production repo is clean"
+
+# Pull latest changes from production
+print_info "Pulling latest changes from origin/main..."
+if ! git pull origin main; then
+    print_error "Failed to pull latest changes from production repo"
+    print_info "Please resolve conflicts manually and try again"
+    exit 1
+fi
+print_success "Production repo is up to date"
+
+cd "${DEV_REPO}"
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Validation
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 1: Validation"
+print_header "Step 2: Validation"
 
 # Check we're in linkedin-worker-test
 if [[ ! -f "${DEV_USERSCRIPT}" ]]; then
@@ -116,7 +146,7 @@ print_success "Found worker.html in dev repo"
 # Version Management
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 2: Version Management"
+print_header "Step 3: Version Management"
 
 # Extract current version from PRODUCTION (what's live now)
 PROD_VERSION=$(grep -m 1 "@version" "${PROD_USERSCRIPT}" | sed -E 's/.*@version[[:space:]]+([0-9.]+).*/\1/')
@@ -165,7 +195,7 @@ print_success "Version set to: ${NEW_VERSION}"
 # File Processing
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 3: Processing Files"
+print_header "Step 4: Processing Files"
 
 # Create temp directory for processed files
 TEMP_DIR=$(mktemp -d)
@@ -222,7 +252,7 @@ print_success "Worker processed"
 # Show Diff
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 4: Review Changes"
+print_header "Step 5: Review Changes"
 
 # Check if there are actual changes
 USERSCRIPT_DIFF=$(diff -q "${PROD_USERSCRIPT}" "${TEMP_USERSCRIPT}" 2>/dev/null || echo "different")
@@ -258,7 +288,7 @@ diff -u "${PROD_WORKER}" "${TEMP_WORKER}" 2>/dev/null | head -30 || true
 # Confirmation
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 5: Confirmation"
+print_header "Step 6: Confirmation"
 
 echo -e "${YELLOW}Ready to deploy:${NC}"
 echo "  • Version: ${PROD_VERSION} → ${NEW_VERSION}"
@@ -279,7 +309,7 @@ fi
 # Deploy
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 6: Deploying to Production"
+print_header "Step 7: Deploying to Production"
 
 # Copy processed files to production
 cp "${TEMP_USERSCRIPT}" "${PROD_USERSCRIPT}"
@@ -294,7 +324,7 @@ rm -rf "${TEMP_DIR}"
 # Git Operations
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 7: Git Operations"
+print_header "Step 8: Git Operations"
 
 cd "${PROD_REPO}"
 
@@ -345,7 +375,7 @@ print_success "Changes committed"
 # Push Reminder
 # ═══════════════════════════════════════════════════════════════════════════
 
-print_header "Step 8: Next Steps"
+print_header "Step 9: Next Steps"
 
 echo -e "${GREEN}✓ Deployment complete!${NC}"
 echo ""
@@ -371,6 +401,14 @@ echo ""
 
 print_info "Production version: ${NEW_VERSION}"
 print_info "Both scraper and worker now reference production URLs"
+
+echo ""
+print_warning "IMPORTANT: Don't forget to sync changes back to dev repo!"
+print_info "If you made fixes directly in production, copy them to dev:"
+echo "     cp ${PROD_USERSCRIPT} ${DEV_USERSCRIPT}"
+echo "     cp ${PROD_WORKER} ${DEV_WORKER}"
+echo ""
+print_info "Or use git to track what changed and manually apply to dev"
 
 # Return to original directory
 cd "${DEV_REPO}"
