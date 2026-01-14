@@ -9,11 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;400;500;600;700&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="img/favicon.ico">
-  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="img/favicon-16x16.png">
-  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-  <link rel="manifest" href="img/site.webmanifest">
+  <link rel="icon" type="image/x-icon" href="/client/phuys/m8kP3vN7xQ2wR9sL/img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/client/phuys/m8kP3vN7xQ2wR9sL/img/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/client/phuys/m8kP3vN7xQ2wR9sL/img/favicon-16x16.png">
+  <link rel="apple-touch-icon" href="/client/phuys/m8kP3vN7xQ2wR9sL/img/apple-touch-icon.png">
+  <link rel="manifest" href="/client/phuys/m8kP3vN7xQ2wR9sL/img/site.webmanifest">
   <style>
     :root {
       --background: hsl(0, 0%, 10%);
@@ -337,12 +337,25 @@
     }
 
     .expand-hint {
-      font-size: 0.75rem;
-      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
       color: var(--accent);
-      margin-top: 0.5rem;
+      background: rgba(215, 255, 86, 0.1);
+      border: 1px solid rgba(215, 255, 86, 0.3);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      margin-top: 0.75rem;
       text-align: center;
-      opacity: 0.7;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      opacity: 0.9;
+    }
+
+    .expand-hint:hover {
+      background: rgba(215, 255, 86, 0.15);
+      border-color: rgba(215, 255, 86, 0.5);
+      opacity: 1;
     }
     
     /* Draft Tabs */
@@ -632,12 +645,12 @@
 
     <!-- Version Number -->
     <div style="position: fixed; bottom: 10px; right: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--muted-foreground); opacity: 0.5; z-index: 1000;">
-      v10.13
+      v10.14
     </div>
   </div>
 
   <script>
-    console.log('[Worker] Version 10.13 - Test deployment with deploy-to-prod.sh');
+    console.log('[Worker] Version 10.14 - UX improvements: button-only expand/collapse');
 
     // Create broadcast channel for cross-tab sync
     const syncChannel = new BroadcastChannel('linkedin-ai-sync');
@@ -1037,7 +1050,7 @@
         <blockquote class="result-content ${isLongContent ? 'collapsed' : ''}" data-full-content="${post.POST_CONTENTS.replace(/"/g, '&quot;')}" data-expanded="false">
           ${isLongContent ? formatLineBreaks(contentPreview) + '...' : formatLineBreaks(post.POST_CONTENTS)}
         </blockquote>
-        ${isLongContent ? '<div class="expand-hint">Click anywhere on the card to expand ↓</div>' : ''}
+        ${isLongContent ? '<button class="expand-hint">Expand Post ↓</button>' : ''}
         
         <div class="draft-tabs">
           <button class="draft-tab active" onclick="switchDraft(this, 0)">Draft 1</button>
@@ -1065,25 +1078,23 @@
       if (isLongContent) {
         const contentBlock = card.querySelector('.result-content');
         const hint = card.querySelector('.expand-hint');
-        
-        card.addEventListener('click', (e) => {
-          if (e.target.closest('.draft-tabs') || e.target.closest('.action-buttons')) {
-            return;
-          }
-          
+
+        hint.addEventListener('click', (e) => {
+          e.stopPropagation();
+
           const isExpanded = contentBlock.dataset.expanded === 'true';
           const fullContent = contentBlock.dataset.fullContent;
-          
+
           if (isExpanded) {
             contentBlock.innerHTML = formatLineBreaks(fullContent.substring(0, 150)) + '...';
             contentBlock.classList.add('collapsed');
             contentBlock.dataset.expanded = 'false';
-            hint.textContent = 'Click anywhere on the card to expand ↓';
+            hint.textContent = 'Expand Post ↓';
           } else {
             contentBlock.innerHTML = formatLineBreaks(fullContent);
             contentBlock.classList.remove('collapsed');
             contentBlock.dataset.expanded = 'true';
-            hint.textContent = 'Click anywhere on the card to collapse ↑';
+            hint.textContent = 'Collapse Post ↑';
           }
         });
       }

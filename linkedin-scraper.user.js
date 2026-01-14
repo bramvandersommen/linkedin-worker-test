@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      4.3
+// @version      5.5
+// @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
+// @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
 // @match        *://*.linkedin.com/*
 // @run-at       document-end
@@ -39,7 +41,7 @@
     // ═════════════════════════════════════════════════════════════════════════════
 
     const CONFIG = {
-        WORKER_URL: 'https://bramvandersommen.github.io/linkedin-worker-test/worker.html',
+        WORKER_URL: 'https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/worker.html',
         N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
         MAX_POSTS: 10,  // Limit number of posts to scrape (for testing)
         ENABLE_NOTIFICATIONS_FALLBACK: false,  // Disable notifications scraping (VIP search only)
@@ -1643,10 +1645,15 @@
 
             function watchForPostSubmit(commentBox) {
                 const observer = new MutationObserver(() => {
-                    const postButton = document.querySelector('button[type="submit"]');
+                    // Find the button within the same comment box container
+                    const container = commentBox.closest('.comments-comment-box--cr') || commentBox.closest('form');
+                    const postButton = container?.querySelector('button.comments-comment-box__submit-button--cr');
+
                     if (postButton && !postButton.hasAttribute('data-tracked')) {
                         postButton.setAttribute('data-tracked', 'true');
+                        console.log('[LinkedIn AI] 📌 Tracking comment button');
                         postButton.addEventListener('click', () => {
+                            console.log('[LinkedIn AI] 🖱️ Comment button clicked');
 
                             setTimeout(() => {
                                 const finalComment = commentBox.innerText || commentBox.value || '';
@@ -1665,31 +1672,23 @@
                                     manualEdits
                                 });
 
-                                // Send to worker page via postMessage
-                                const message = {
-                                    type: 'COMMENT_POSTED',
-                                    data: {
-                                        postID: postData.postID,
-                                        selectedDraft: currentDraftIndex + 1,
-                                        originalDraft: originalDraft,
-                                        finalComment: finalComment,
-                                        manualEdits: manualEdits,
-                                        timestamp: new Date().toISOString()
-                                    }
-                                };
+                                // Build tracking URL (same as manual tracking)
+                                const trackParams = new URLSearchParams({
+                                    action: 'track',
+                                    postId: postData.postID,
+                                    draft: (currentDraftIndex + 1).toString(),
+                                    original: encodeURIComponent(originalDraft),
+                                    comment: encodeURIComponent(finalComment),
+                                    edited: manualEdits.toString()
+                                });
 
-                                // Try to send to opener window (if opened from worker)
-                                if (window.opener && !window.opener.closed) {
-                                    try {
-                                        const workerOrigin = new URL(CONFIG.WORKER_URL).origin;
-                                        window.opener.postMessage(message, workerOrigin);
-                                        console.log('[LinkedIn AI] ✅ Sent to worker via window.opener');
-                                    } catch (error) {
-                                        console.error('[LinkedIn AI] ❌ Error sending to opener:', error);
-                                    }
-                                } else {
-                                    console.warn('[LinkedIn AI] ⚠️ No opener window (page not opened from worker)');
-                                }
+                                // Open worker window with tracking data
+                                window.open(
+                                    `${CONFIG.WORKER_URL}?${trackParams.toString()}`,
+                                    '_blank',
+                                    'width=400,height=300'
+                                );
+                                console.log('[LinkedIn AI] ✅ Opened tracking window');
                             }, 500);
                         });
                     }
