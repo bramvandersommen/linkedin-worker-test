@@ -16,25 +16,25 @@
     // ═════════════════════════════════════════════════════════════════════════════
     // Dark Theme Detection & Adjustment
     // ═════════════════════════════════════════════════════════════════════════════
-    const targets = [document.documentElement, document.body];
+    // const targets = [document.documentElement, document.body];
 
-    function isDarkTheme(element) {
-        const bg = window.getComputedStyle(element).backgroundColor;
-        if (!bg) return false;
-        const rgb = bg.match(/\d+/g);
-        if (!rgb || rgb.length < 3) return false;
-        const [r, g, b] = rgb.map(Number);
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
-        return luminance < 128;
-    }
+    // function isDarkTheme(element) {
+    //     const bg = window.getComputedStyle(element).backgroundColor;
+    //     if (!bg) return false;
+    //     const rgb = bg.match(/\d+/g);
+    //     if (!rgb || rgb.length < 3) return false;
+    //     const [r, g, b] = rgb.map(Number);
+    //     const luminance = (0.299 * r + 0.587 * g + 0.114 * b);
+    //     return luminance < 128;
+    // }
 
-    const darkDetected = targets.some(el => isDarkTheme(el));
+    // const darkDetected = targets.some(el => isDarkTheme(el));
 
-    if (darkDetected) {
-        const style = document.createElement("style");
-        style.textContent = `body, html {background-color: #1c1c1c !important;}`;
-        document.head.appendChild(style);
-    }
+    // if (darkDetected) {
+    //     const style = document.createElement("style");
+    //     style.textContent = `body, html {background-color: #1c1c1c !important;}`;
+    //     document.head.appendChild(style);
+    // }
 
     // ═════════════════════════════════════════════════════════════════════════════
     // CONFIGURATION
