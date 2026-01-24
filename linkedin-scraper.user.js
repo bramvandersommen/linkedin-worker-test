@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      5.9
+// @version      6.0
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -455,12 +455,13 @@
 
             // Find container with multiple fallback strategies
             const containerStrategies = [
-                () => document.querySelector('[role="list"]'), // New structure
+                () => document.querySelector('[data-testid="lazy-column"]'), // New structure (most specific)
+                () => document.querySelector('[data-component-type="LazyColumn"]'), // New structure alternative
                 () => document.querySelector('.search-results-container'), // Old structure
                 () => document.querySelector('.scaffold-finite-scroll__content'), // Old structure
                 () => document.querySelector('[class*="search-results"]'), // Old structure
                 () => {
-                    // Look for feed-full-update elements (new) or feed-shared-update-v2 (old)
+                    // Last resort: find any container with posts
                     const elements = document.querySelectorAll('[class*="scroll"]');
                     return Array.from(elements).find(el =>
                         el.querySelectorAll('[data-view-name="feed-full-update"]').length > 0 ||
@@ -474,15 +475,17 @@
                 try {
                     container = strategy();
                     if (container) {
-                        console.log('[LinkedIn AI] VIP Search container found');
+                        console.log('[LinkedIn AI] VIP Search container found:', container);
                         break;
                     }
                 } catch (err) {
+                    console.warn('[LinkedIn AI] Container strategy failed:', err);
                     continue;
                 }
             }
 
             if (!container) {
+                console.error('[LinkedIn AI] ❌ No container found with any strategy');
                 onProgress?.('❌ VIP search container not found');
                 warnings.push('Container not found');
                 return { meta: { warnings, elapsed: 0 }, matches: [] };
@@ -578,15 +581,21 @@
                 try {
                     allCards = Array.from(strategy());
                     if (allCards.length > 0) {
-                        console.log(`[LinkedIn AI] Found ${allCards.length} post cards`);
+                        console.log(`[LinkedIn AI] Found ${allCards.length} post cards using strategy`);
                         break;
                     }
                 } catch (err) {
+                    console.warn('[LinkedIn AI] Card strategy failed:', err);
                     continue;
                 }
             }
 
             if (allCards.length === 0) {
+                console.error('[LinkedIn AI] ❌ No cards found. Container:', container);
+                console.error('[LinkedIn AI] Tried to find: [role="listitem"], .feed-shared-update-v2, [data-urn*="activity"]');
+                const listitems = container.querySelectorAll('[role="listitem"]');
+                const feedUpdates = container.querySelectorAll('[data-view-name="feed-full-update"]');
+                console.error(`[LinkedIn AI] Debug: Found ${listitems.length} listitems, ${feedUpdates.length} feed-full-updates`);
                 onProgress?.('⚠️ No post cards found');
                 warnings.push('No cards found');
                 return { meta: { warnings, elapsed: 0 }, matches: [] };
