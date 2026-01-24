@@ -477,7 +477,30 @@
     .archive-button.archived:hover {
       transform: none;
     }
-    
+
+    .view-post-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.875rem 1.375rem;
+      text-decoration: none;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 500;
+      font-size: 0.9375rem;
+      transition: all 0.18s ease-out;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--foreground);
+      cursor: pointer;
+    }
+
+    .view-post-button:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
     /* Empty State */
     .empty-state {
       text-align: center;
@@ -1069,6 +1092,9 @@
               <path d="M6 3L11 8L6 13"/>
             </svg>
           </a>
+          <a href="${post.POST_URL}" class="view-post-button" target="_blank" rel="noopener noreferrer">
+            👁️ View Post
+          </a>
           <button class="archive-button" onclick="event.stopPropagation(); archivePost('${post.POST_ID}', this)">
             📦 Archive
           </button>
@@ -1340,6 +1366,7 @@
         POST_ID: post.POST_ID || post.postID,
         VIP_NAME: post.VIP_NAME || post.nameOfVIP,
         POST_CONTENTS: post.POST_CONTENTS || post.postContent,
+        POST_URL: post.POST_URL || post.urlToPost || post.postUrl,
         ENRICHED_URL: post.ENRICHED_URL || post.urlToPost || post.enrichedUrl,
         DRAFT_1: post.DRAFT_1 || post.draft1 || '',
         DRAFT_2: post.DRAFT_2 || post.draft2 || '',
