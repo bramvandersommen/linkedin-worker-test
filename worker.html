@@ -1052,6 +1052,9 @@
       card.dataset.postId = post.POST_ID;
       card.dataset.selectedDraft = '0';  // Track which draft tab is selected (0-indexed)
 
+      // Extract clean POST_URL from ENRICHED_URL (remove hash params)
+      const cleanPostUrl = post.POST_URL || (post.ENRICHED_URL || post.urlToPost || '').split('#')[0];
+
       const formatLineBreaks = (text) => {
         if (!text) return '';
         return text
@@ -1092,7 +1095,7 @@
               <path d="M6 3L11 8L6 13"/>
             </svg>
           </a>
-          <a href="${post.POST_URL}" class="view-post-button" target="_blank" rel="noopener noreferrer">
+          <a href="${cleanPostUrl}" class="view-post-button" target="_blank" rel="noopener noreferrer">
             👁️ View Post
           </a>
           <button class="archive-button" onclick="event.stopPropagation(); archivePost('${post.POST_ID}', this)">
