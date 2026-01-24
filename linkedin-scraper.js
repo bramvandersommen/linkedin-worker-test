@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      5.8
+// @version      5.9
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -561,16 +561,13 @@
             onProgress?.('📋 Finding posts...');
             const cardStrategies = [
                 () => {
-                    // New structure: select listitem containers (for proper scrolling/highlighting)
-                    const listDiv = container.querySelector('[role="list"]');
-                    if (listDiv) {
-                        const items = listDiv.querySelectorAll('[role="listitem"]');
-                        // Filter to only items that contain feed-full-update (actual posts)
-                        return Array.from(items).filter(item =>
-                            item.querySelector('[data-view-name="feed-full-update"]')
-                        );
-                    }
-                    return [];
+                    // New structure: query listitems directly from container
+                    // (container might BE the list, or contain the list)
+                    const items = container.querySelectorAll('[role="listitem"]');
+                    // Filter to only items that contain feed-full-update (actual posts, not ads/promos)
+                    return Array.from(items).filter(item =>
+                        item.querySelector('[data-view-name="feed-full-update"]')
+                    );
                 },
                 () => container.querySelectorAll('.feed-shared-update-v2'), // Old selector (fallback)
                 () => container.querySelectorAll('[data-urn*="activity"]') // Old selector (fallback)
