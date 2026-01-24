@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      6.2
+// @version      6.3
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -764,7 +764,14 @@
                                 // Look for the expandable text box inside
                                 const textBox = commentaryEl.querySelector('[data-testid="expandable-text-box"]');
                                 if (textBox) {
-                                    return Utils.convertHtmlToText(textBox.innerHTML);
+                                    // Clone to avoid modifying DOM
+                                    const clone = textBox.cloneNode(true);
+                                    // Remove "... more" button
+                                    const moreButton = clone.querySelector('[data-testid="expandable-text-button"]');
+                                    if (moreButton) {
+                                        moreButton.remove();
+                                    }
+                                    return Utils.convertHtmlToText(clone.innerHTML);
                                 }
                                 return Utils.convertHtmlToText(commentaryEl.innerHTML);
                             }
