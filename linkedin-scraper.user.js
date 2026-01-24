@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      5.5
+// @version      5.6
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -455,12 +455,15 @@
 
             // Find container with multiple fallback strategies
             const containerStrategies = [
-                () => document.querySelector('.search-results-container'),
-                () => document.querySelector('.scaffold-finite-scroll__content'),
-                () => document.querySelector('[class*="search-results"]'),
+                () => document.querySelector('[role="list"]'), // New structure
+                () => document.querySelector('.search-results-container'), // Old structure
+                () => document.querySelector('.scaffold-finite-scroll__content'), // Old structure
+                () => document.querySelector('[class*="search-results"]'), // Old structure
                 () => {
+                    // Look for feed-full-update elements (new) or feed-shared-update-v2 (old)
                     const elements = document.querySelectorAll('[class*="scroll"]');
                     return Array.from(elements).find(el =>
+                        el.querySelectorAll('[data-view-name="feed-full-update"]').length > 0 ||
                         el.querySelectorAll('.feed-shared-update-v2').length > 0
                     );
                 }
@@ -557,11 +560,12 @@
             // Find post cards
             onProgress?.('📋 Finding posts...');
             const cardStrategies = [
-                () => container.querySelectorAll('.feed-shared-update-v2'),
-                () => container.querySelectorAll('[data-urn*="activity"]'),
+                () => container.querySelectorAll('[data-view-name="feed-full-update"]'),
+                () => container.querySelectorAll('.feed-shared-update-v2'), // Old selector (fallback)
+                () => container.querySelectorAll('[data-urn*="activity"]'), // Old selector (fallback)
                 () => {
-                    const ul = container.querySelector('ul[role="list"]');
-                    return ul ? ul.querySelectorAll('li') : [];
+                    const listDiv = container.querySelector('[role="list"]');
+                    return listDiv ? listDiv.querySelectorAll('[role="listitem"]') : [];
                 }
             ];
 
@@ -592,6 +596,27 @@
                     let postID = null;
                     const idStrategies = [
                         () => {
+                            // New structure: data-view-tracking-scope contains encoded URN
+                            const trackingEl = card.querySelector('[data-view-tracking-scope]');
+                            if (trackingEl) {
+                                try {
+                                    const tracking = trackingEl.getAttribute('data-view-tracking-scope');
+                                    // Decode the JSON (it's HTML-encoded)
+                                    const decoded = tracking.replace(/&quot;/g, '"');
+                                    const data = JSON.parse(decoded);
+                                    if (data[0]?.breadcrumb?.content?.data) {
+                                        // Convert buffer array to string
+                                        const str = String.fromCharCode(...data[0].breadcrumb.content.data);
+                                        const match = str.match(/"updateUrn":"urn:li:activity:(\d+)"/);
+                                        if (match) return match[1];
+                                    }
+                                } catch (e) {
+                                    console.warn('[LinkedIn AI] Failed to parse tracking data:', e);
+                                }
+                            }
+                        },
+                        () => {
+                            // Old structure fallback
                             const feedCard = card.querySelector('.feed-shared-update-v2') || card;
                             const urn = feedCard.getAttribute('data-urn');
                             if (urn) {
@@ -694,6 +719,19 @@
                     let postContent = '';
                     const contentStrategies = [
                         () => {
+                            // New structure: data-view-name="feed-commentary"
+                            const commentaryEl = card.querySelector('[data-view-name="feed-commentary"]');
+                            if (commentaryEl) {
+                                // Look for the expandable text box inside
+                                const textBox = commentaryEl.querySelector('[data-testid="expandable-text-box"]');
+                                if (textBox) {
+                                    return Utils.convertHtmlToText(textBox.innerHTML);
+                                }
+                                return Utils.convertHtmlToText(commentaryEl.innerHTML);
+                            }
+                        },
+                        () => {
+                            // Old structure fallback
                             const contentDiv = card.querySelector('.update-components-text .break-words > span[dir="ltr"]');
                             if (contentDiv) {
                                 return Utils.convertHtmlToText(contentDiv.innerHTML);
