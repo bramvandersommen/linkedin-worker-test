@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      6.1
+// @version      6.2
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -494,6 +494,13 @@
             // Scroll to load all posts (infinite scroll handling)
             onProgress?.('📜 Loading all posts...');
 
+            // Find the scrollable main element
+            const scrollableMain = document.querySelector('main');
+            if (!scrollableMain) {
+                console.warn('[LinkedIn AI] No <main> element found for scrolling');
+                onProgress?.('⚠️ Could not find scrollable container');
+            }
+
             let previousHeight = 0;
             let stableCount = 0;
             const maxRounds = 10;
@@ -501,22 +508,24 @@
             for (let round = 1; round <= maxRounds; round++) {
                 onProgress?.(`📜 Round ${round}/${maxRounds}: Scrolling...`);
 
-                // Smooth scroll container to bottom
-                const start = container.scrollTop;
-                const end = container.scrollHeight - container.clientHeight;
-                const duration = 200;
-                const startT = performance.now();
+                if (scrollableMain) {
+                    // Smooth scroll main to bottom
+                    const start = scrollableMain.scrollTop;
+                    const end = scrollableMain.scrollHeight - scrollableMain.clientHeight;
+                    const duration = 200;
+                    const startT = performance.now();
 
-                await new Promise(resolve => {
-                    function animate(now) {
-                        const progress = Math.min((now - startT) / duration, 1);
-                        const ease = 1 - Math.pow(1 - progress, 3);
-                        container.scrollTo(0, start + (end - start) * ease);
-                        if (progress < 1) requestAnimationFrame(animate);
-                        else resolve();
-                    }
-                    requestAnimationFrame(animate);
-                });
+                    await new Promise(resolve => {
+                        function animate(now) {
+                            const progress = Math.min((now - startT) / duration, 1);
+                            const ease = 1 - Math.pow(1 - progress, 3);
+                            scrollableMain.scrollTo(0, start + (end - start) * ease);
+                            if (progress < 1) requestAnimationFrame(animate);
+                            else resolve();
+                        }
+                        requestAnimationFrame(animate);
+                    });
+                }
 
                 // Wait for content to load
                 await Utils.randomPause(800, 1200);
@@ -539,26 +548,28 @@
                 }
             }
 
-            // Scroll container back to top
-            onProgress?.('📍 Scrolling to top...');
-            await new Promise(resolve => {
-                const startY = container.scrollTop;
-                const duration = 300;
-                const startTime = performance.now();
+            // Scroll main back to top
+            if (scrollableMain) {
+                onProgress?.('📍 Scrolling to top...');
+                await new Promise(resolve => {
+                    const startY = scrollableMain.scrollTop;
+                    const duration = 300;
+                    const startTime = performance.now();
 
-                function animate(now) {
-                    const progress = Math.min((now - startTime) / duration, 1);
-                    const ease = 1 - Math.pow(1 - progress, 3);
-                    container.scrollTo(0, startY * (1 - ease));
+                    function animate(now) {
+                        const progress = Math.min((now - startTime) / duration, 1);
+                        const ease = 1 - Math.pow(1 - progress, 3);
+                        scrollableMain.scrollTo(0, startY * (1 - ease));
 
-                    if (progress < 1) {
-                        requestAnimationFrame(animate);
-                    } else {
-                        resolve();
+                        if (progress < 1) {
+                            requestAnimationFrame(animate);
+                        } else {
+                            resolve();
+                        }
                     }
-                }
-                requestAnimationFrame(animate);
-            });
+                    requestAnimationFrame(animate);
+                });
+            }
 
             // Find post cards
             onProgress?.('📋 Finding posts...');
@@ -876,11 +887,14 @@
                 return { meta: { warnings, elapsed: 0, strategy: 'NOTIFICATIONS' }, matches: [] };
             }
 
+            // Find scrollable element (prefer <main>, fallback to parent)
+            const scrollableEl = document.querySelector('main') || parent;
+
             for (let round = 1; round <= 5; round++) {
                 onProgress?.(`📜 Round ${round}/5: Scrolling...`);
 
-                const start = parent.scrollTop;
-                const end = parent.scrollHeight - parent.clientHeight;
+                const start = scrollableEl.scrollTop;
+                const end = scrollableEl.scrollHeight - scrollableEl.clientHeight;
                 const duration = 180;
                 const startT = performance.now();
 
@@ -888,7 +902,7 @@
                     function animate(now) {
                         const progress = Math.min((now - startT) / duration, 1);
                         const ease = 1 - Math.pow(1 - progress, 3);
-                        parent.scrollTo(0, start + (end - start) * ease);
+                        scrollableEl.scrollTo(0, start + (end - start) * ease);
                         if (progress < 1) requestAnimationFrame(animate);
                         else resolve();
                     }
@@ -1294,24 +1308,27 @@
 
                 // Scroll to top first
                 updateStatus('📍 Scrolling to top...');
-                await new Promise(resolve => {
-                    const startY = window.scrollY;
-                    const duration = 300;
-                    const startTime = performance.now();
+                const scrollableMain = document.querySelector('main');
+                if (scrollableMain) {
+                    await new Promise(resolve => {
+                        const startY = scrollableMain.scrollTop;
+                        const duration = 300;
+                        const startTime = performance.now();
 
-                    function animate(now) {
-                        const progress = Math.min((now - startTime) / duration, 1);
-                        const ease = 1 - Math.pow(1 - progress, 3);
-                        window.scrollTo(0, startY * (1 - ease));
+                        function animate(now) {
+                            const progress = Math.min((now - startTime) / duration, 1);
+                            const ease = 1 - Math.pow(1 - progress, 3);
+                            scrollableMain.scrollTo(0, startY * (1 - ease));
 
-                        if (progress < 1) {
-                            requestAnimationFrame(animate);
-                        } else {
-                            resolve();
+                            if (progress < 1) {
+                                requestAnimationFrame(animate);
+                            } else {
+                                resolve();
+                            }
                         }
-                    }
-                    requestAnimationFrame(animate);
-                });
+                        requestAnimationFrame(animate);
+                    });
+                }
 
                 // Sequential reveal with scroll into view
                 updateStatus(`✨ Revealing ${result.matches.length} matches...`);
