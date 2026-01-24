@@ -141,8 +141,8 @@ Drafts get overwritten, no tracking columns needed
 
 | Task | Duration | Status |
 |------|----------|--------|
-| **Phase 1: View Post Button** | 30 min | ⏳ Next |
-| Create test payload for N8N | 15 min | ⏳ Next |
+| **Phase 1: View Post Button** | 30 min | ✅ Complete |
+| Create test payload for N8N | 15 min | ✅ Complete |
 | **Phase 2: N8N Backend** | | |
 | - Create archive sheet | 15 min | ⏳ Pending |
 | - New webhook | 30 min | ⏳ Pending |
@@ -162,9 +162,9 @@ Drafts get overwritten, no tracking columns needed
 ## 🎯 **Implementation Order**
 
 1. ✅ **Planning complete** (this doc)
-2. ⏳ **View Post button** (quick win, test deployment)
-3. ⏳ **Create test payload** (for N8N testing)
-4. ⏳ **N8N backend** (build + test with payload)
+2. ✅ **View Post button** (quick win, test deployment)
+3. ✅ **Create test payload** (for N8N testing)
+4. ⏳ **N8N backend** (build + test with payload) ← CURRENT
 5. ⏳ **Worker UI** (modal + integration)
 6. ⏳ **End-to-end testing**
 
