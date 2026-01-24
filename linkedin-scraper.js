@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      5.6
+// @version      5.7
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -646,7 +646,22 @@
                     let nameText = '';
                     const nameStrategies = [
                         () => {
-                            // Try to get just the name span, not all nested content
+                            // New structure: Find profile link and get name from <p> inside
+                            const profileLinks = card.querySelectorAll('a[href*="/in/"]');
+                            for (const link of profileLinks) {
+                                const nameP = link.querySelector('p');
+                                if (nameP) {
+                                    // Get first text, strip LinkedIn badge and connection degree
+                                    const text = nameP.textContent.trim();
+                                    const cleanName = text.split('\n')[0].split('•')[0].trim();
+                                    if (cleanName && cleanName.length > 2) {
+                                        return cleanName;
+                                    }
+                                }
+                            }
+                        },
+                        () => {
+                            // Old structure fallback
                             const titleDiv = card.querySelector('.update-components-actor__title');
                             if (titleDiv) {
                                 const nameSpan = titleDiv.querySelector('span[aria-hidden="true"]') ||
