@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      6.0
+// @version      6.1
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
@@ -501,9 +501,9 @@
             for (let round = 1; round <= maxRounds; round++) {
                 onProgress?.(`📜 Round ${round}/${maxRounds}: Scrolling...`);
 
-                // Smooth scroll to bottom
-                const start = window.scrollY;
-                const end = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
+                // Smooth scroll container to bottom
+                const start = container.scrollTop;
+                const end = container.scrollHeight - container.clientHeight;
                 const duration = 200;
                 const startT = performance.now();
 
@@ -511,7 +511,7 @@
                     function animate(now) {
                         const progress = Math.min((now - startT) / duration, 1);
                         const ease = 1 - Math.pow(1 - progress, 3);
-                        window.scrollTo(0, start + (end - start) * ease);
+                        container.scrollTo(0, start + (end - start) * ease);
                         if (progress < 1) requestAnimationFrame(animate);
                         else resolve();
                     }
@@ -521,8 +521,8 @@
                 // Wait for content to load
                 await Utils.randomPause(800, 1200);
 
-                // Check if page height changed
-                const currentHeight = document.body.scrollHeight;
+                // Check if container height changed
+                const currentHeight = container.scrollHeight;
                 if (currentHeight === previousHeight) {
                     stableCount++;
                     if (stableCount >= 2) {
@@ -539,17 +539,17 @@
                 }
             }
 
-            // Scroll back to top
+            // Scroll container back to top
             onProgress?.('📍 Scrolling to top...');
             await new Promise(resolve => {
-                const startY = window.scrollY;
+                const startY = container.scrollTop;
                 const duration = 300;
                 const startTime = performance.now();
 
                 function animate(now) {
                     const progress = Math.min((now - startTime) / duration, 1);
                     const ease = 1 - Math.pow(1 - progress, 3);
-                    window.scrollTo(0, startY * (1 - ease));
+                    container.scrollTo(0, startY * (1 - ease));
 
                     if (progress < 1) {
                         requestAnimationFrame(animate);
@@ -879,8 +879,8 @@
             for (let round = 1; round <= 5; round++) {
                 onProgress?.(`📜 Round ${round}/5: Scrolling...`);
 
-                const start = window.scrollY;
-                const end = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight) - window.innerHeight;
+                const start = parent.scrollTop;
+                const end = parent.scrollHeight - parent.clientHeight;
                 const duration = 180;
                 const startT = performance.now();
 
@@ -888,7 +888,7 @@
                     function animate(now) {
                         const progress = Math.min((now - startT) / duration, 1);
                         const ease = 1 - Math.pow(1 - progress, 3);
-                        window.scrollTo(0, start + (end - start) * ease);
+                        parent.scrollTo(0, start + (end - start) * ease);
                         if (progress < 1) requestAnimationFrame(animate);
                         else resolve();
                     }
