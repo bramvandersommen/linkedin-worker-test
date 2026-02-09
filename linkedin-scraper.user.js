@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         OffhoursAI LinkedIn AI Commenter (Dual Strategy)
 // @namespace    https://offhoursai.com/
-// @version      6.3
+// @version      6.4
 // @updateURL    https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @downloadURL  https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/linkedin-scraper.user.js
 // @description  LinkedIn AI Post Commenter scraper with VIP Search Results + Notifications fallback
