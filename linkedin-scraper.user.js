@@ -43,7 +43,7 @@
     const CONFIG = {
         WORKER_URL: 'https://offhoursai.com/client/phuys/m8kP3vN7xQ2wR9sL/worker.html',
         N8N_TRACKER_WEBHOOK: 'https://your-n8n-instance.com/webhook/comment-tracker',
-        MAX_POSTS: 10,  // Limit number of posts to scrape (for testing)
+        MAX_POSTS: null,  // Limit number of posts to scrape (for testing)
         ENABLE_NOTIFICATIONS_FALLBACK: false,  // Disable notifications scraping (VIP search only)
         VIP_LIST: [
             {
@@ -614,33 +614,71 @@
 
             onProgress?.(`🔎 Extracting ${allCards.length} posts...`);
 
+            // Helper function to extract activity ID from tracking scope data
+            function extractActivityFromTrackingScope(trackingAttr) {
+                if (!trackingAttr) return null;
+                try {
+                    const decoded = trackingAttr.replace(/&quot;/g, '"');
+                    const data = JSON.parse(decoded);
+
+                    // Check each tracking entry (there can be multiple)
+                    for (const entry of data) {
+                        // Prioritize FeedUpdateServedEvent entries
+                        if (entry?.breadcrumb?.content?.data) {
+                            const str = String.fromCharCode(...entry.breadcrumb.content.data);
+                            // Match both updateUrn and sourceUpdateUrn patterns
+                            const match = str.match(/(?:"updateUrn"|"sourceUpdateUrn")\s*:\s*"urn:li:activity:(\d+)"/);
+                            if (match) return match[1];
+                        }
+                    }
+                } catch (e) {
+                    // Silent fail, caller will try next strategy
+                }
+                return null;
+            }
+
             allCards.forEach((card) => {
                 try {
                     // Extract post ID
                     let postID = null;
                     const idStrategies = [
                         () => {
-                            // New structure: data-view-tracking-scope contains encoded URN
-                            const trackingEl = card.querySelector('[data-view-tracking-scope]');
-                            if (trackingEl) {
-                                try {
-                                    const tracking = trackingEl.getAttribute('data-view-tracking-scope');
-                                    // Decode the JSON (it's HTML-encoded)
-                                    const decoded = tracking.replace(/&quot;/g, '"');
-                                    const data = JSON.parse(decoded);
-                                    if (data[0]?.breadcrumb?.content?.data) {
-                                        // Convert buffer array to string
-                                        const str = String.fromCharCode(...data[0].breadcrumb.content.data);
-                                        const match = str.match(/"updateUrn":"urn:li:activity:(\d+)"/);
-                                        if (match) return match[1];
-                                    }
-                                } catch (e) {
-                                    console.warn('[LinkedIn AI] Failed to parse tracking data:', e);
+                            // Strategy 1: Find tracking scope with FeedUpdateServedEvent (most reliable)
+                            const trackingEls = card.querySelectorAll('[data-view-tracking-scope]');
+                            for (const el of trackingEls) {
+                                const attr = el.getAttribute('data-view-tracking-scope');
+                                // Prioritize elements with FeedUpdateServedEvent topic
+                                if (attr && attr.includes('FeedUpdateServedEvent')) {
+                                    const id = extractActivityFromTrackingScope(attr);
+                                    if (id) return id;
                                 }
                             }
                         },
                         () => {
-                            // Old structure fallback
+                            // Strategy 2: Check parent elements for tracking scope (new LinkedIn structure)
+                            // The main tracking data is often at a parent level above the listitem
+                            let parent = card.parentElement;
+                            let depth = 0;
+                            while (parent && depth < 5) {
+                                const trackingAttr = parent.getAttribute('data-view-tracking-scope');
+                                if (trackingAttr && trackingAttr.includes('FeedUpdateServedEvent')) {
+                                    const id = extractActivityFromTrackingScope(trackingAttr);
+                                    if (id) return id;
+                                }
+                                parent = parent.parentElement;
+                                depth++;
+                            }
+                        },
+                        () => {
+                            // Strategy 3: Any tracking scope inside the card (fallback)
+                            const trackingEls = card.querySelectorAll('[data-view-tracking-scope]');
+                            for (const el of trackingEls) {
+                                const id = extractActivityFromTrackingScope(el.getAttribute('data-view-tracking-scope'));
+                                if (id) return id;
+                            }
+                        },
+                        () => {
+                            // Strategy 4: Old structure - data-urn attribute
                             const feedCard = card.querySelector('.feed-shared-update-v2') || card;
                             const urn = feedCard.getAttribute('data-urn');
                             if (urn) {
@@ -649,8 +687,19 @@
                             }
                         },
                         () => {
+                            // Strategy 5: Activity link in href
                             const link = card.querySelector('a[href*="activity"]');
                             return link ? Utils.extractPostID(link.href) : null;
+                        },
+                        () => {
+                            // Strategy 6: Look for any urn:li:activity pattern in card's HTML attributes
+                            const allElements = card.querySelectorAll('[data-urn], [href*="activity"], [data-entity-urn]');
+                            for (const el of allElements) {
+                                for (const attr of el.attributes) {
+                                    const match = attr.value.match(/urn:li:activity:(\d+)/);
+                                    if (match) return match[1];
+                                }
+                            }
                         }
                     ];
 
