@@ -647,16 +647,26 @@
     }
 
     .notification-banner {
+      position: relative;
       display: flex;
       flex-direction: column;
       gap: 10px;
       padding: 14px 16px;
       border-radius: 12px;
       font-size: 14px;
-      backdrop-filter: blur(20px);
       box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.2);
-      animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      opacity: 0;
+      animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+      opacity: 1;
+      overflow: hidden;
+    }
+
+    .notification-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(35, 35, 35, 0.2);
+      backdrop-filter: blur(20px);
+      z-index: -1;
     }
 
     .notification-banner.dismissing {
@@ -670,22 +680,22 @@
     .notification-banner:nth-child(5) { animation-delay: 0.6s; }
 
     .notification-banner.update {
-      background: linear-gradient(135deg, rgba(215,255,86,0.2) 0%, rgba(30,30,30,0.95) 100%);
+      background: linear-gradient(135deg, rgba(215,255,86,0.3) 0%, rgba(26,26,26,0.8) 70%);
       border: 1px solid rgba(215,255,86,0.4);
     }
 
     .notification-banner.warning {
-      background: linear-gradient(135deg, rgba(255,149,0,0.2) 0%, rgba(30,30,30,0.95) 100%);
+      background: linear-gradient(135deg, rgba(255,149,0,0.3) 0%, rgba(26,26,26,0.8) 70%);
       border: 1px solid rgba(255,149,0,0.4);
     }
 
     .notification-banner.info {
-      background: linear-gradient(135deg, rgba(10,102,194,0.2) 0%, rgba(30,30,30,0.95) 100%);
+      background: linear-gradient(135deg, rgba(10,102,194,0.3) 0%, rgba(26,26,26,0.8) 70%);
       border: 1px solid rgba(10,102,194,0.3);
     }
 
     .notification-banner.success {
-      background: linear-gradient(135deg, rgba(68,181,83,0.2) 0%, rgba(30,30,30,0.95) 100%);
+      background: linear-gradient(135deg, rgba(68,181,83,0.3) 0%, rgba(26,26,26,0.8) 70%);
       border: 1px solid rgba(68,181,83,0.4);
     }
 
@@ -724,18 +734,20 @@
 
     .notification-action {
       padding: 6px 12px;
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(215,255,86,0.15);
+      border: 1px solid rgba(215,255,86,0.3);
       border-radius: 6px;
       font-size: 13px;
       cursor: pointer;
-      color: inherit;
+      color: #D7FF56;
       text-decoration: none;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .notification-action:hover {
-      background: rgba(255,255,255,0.2);
+      background: rgba(215,255,86,0.25);
+      border-color: rgba(215,255,86,0.5);
+      box-shadow: 0 0 12px rgba(215,255,86,0.2);
     }
 
     .notification-dismiss {
@@ -752,7 +764,9 @@
 
     .notification-dismiss:hover {
       opacity: 1;
-      background: rgba(255,255,255,0.1);
+      background: rgba(215,255,86,0.1);
+      border-color: rgba(215,255,86,0.3);
+      color: #D7FF56;
     }
 
     /* Changelog Button - always visible at bottom */
@@ -762,8 +776,8 @@
       justify-content: center;
       gap: 8px;
       padding: 8px 12px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(35, 35, 35, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.3);
       border-radius: 8px;
       text-decoration: none;
       color: inherit;
@@ -774,12 +788,18 @@
     }
 
     .changelog-btn.visible {
-      opacity: 0.5;
+      opacity: 1;
     }
 
     .changelog-btn:hover {
-      opacity: 0.8;
-      background: rgba(255,255,255,0.06);
+      opacity: 1;
+      background: rgba(215,255,86,0.1);
+      border-color: rgba(215,255,86,0.3);
+      color: #D7FF56;
+    }
+
+    .changelog-btn:hover .changelog-icon {
+      fill: #D7FF56;
     }
 
     .changelog-icon {
@@ -792,7 +812,6 @@
     .notification-banner {
       max-height: 200px;
       overflow: hidden;
-      transition: max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out, opacity 0.3s ease-out;
     }
 
     .notification-banner.collapsing {
@@ -801,6 +820,7 @@
       padding-top: 0 !important;
       padding-bottom: 0 !important;
       opacity: 0;
+      transition: max-height 0.3s ease-out, margin 0.3s ease-out, padding 0.3s ease-out, opacity 0.3s ease-out;
     }
   </style>
 </head>
@@ -910,23 +930,50 @@
 
     async function fetchNotifications() {
       try {
-        const res = await fetch(NOTIFICATIONS_CSV);
+        const res = await fetch(NOTIFICATIONS_CSV, {
+          redirect: 'follow',
+          cache: 'no-store'
+        });
+
+        if (!res.ok) return [];
+
         const text = await res.text();
 
-        // Parse CSV (skip header row)
-        const rows = text.trim().split('\n').slice(1);
+        // Check if we got HTML instead of CSV (redirect not followed)
+        if (text.trim().startsWith('<')) return [];
 
-        return rows.map(row => {
-          // Parse CSV properly handling quoted fields and empty values
+        // Parse CSV properly handling multi-line quoted fields
+        const rows = [];
+        let currentRow = '';
+        let inQuotes = false;
+
+        for (const char of text) {
+          if (char === '"') {
+            inQuotes = !inQuotes;
+            currentRow += char;
+          } else if (char === '\n' && !inQuotes) {
+            if (currentRow.trim()) rows.push(currentRow);
+            currentRow = '';
+          } else {
+            currentRow += char;
+          }
+        }
+        if (currentRow.trim()) rows.push(currentRow);
+
+        // Skip header row
+        const dataRows = rows.slice(1);
+
+        return dataRows.map((row, idx) => {
+          // Parse row into columns handling quoted fields
           const cols = [];
           let current = '';
-          let inQuotes = false;
+          let colInQuotes = false;
 
           for (let i = 0; i <= row.length; i++) {
             const char = row[i];
             if (char === '"') {
-              inQuotes = !inQuotes;
-            } else if ((char === ',' || i === row.length) && !inQuotes) {
+              colInQuotes = !colInQuotes;
+            } else if ((char === ',' || i === row.length) && !colInQuotes) {
               cols.push(current.trim());
               current = '';
             } else if (char !== undefined) {
@@ -960,9 +1007,9 @@
     function renderNotifications(notifications) {
       const container = document.getElementById('notifications-container');
       const changelogBtn = document.getElementById('changelogBtn');
-      const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
 
-      const toShow = notifications.filter(n => !dismissed.includes(n.id));
+      // Show all active notifications (dismissal is handled server-side via sheet)
+      const toShow = notifications;
 
       // Remove any existing notification banners (keep changelog button)
       container.querySelectorAll('.notification-banner').forEach(el => el.remove());
@@ -983,7 +1030,7 @@
             <span class="notification-icon">${NOTIFICATION_ICONS[n.type] || 'ℹ'}</span>
             <div class="notification-content">
               ${n.title ? `<div class="notification-title">${n.title}</div>` : ''}
-              <div class="notification-message">${n.message}</div>
+              <div class="notification-message">${n.message.replace(/\n/g, '<br>')}</div>
             </div>
           </div>
           <div class="notification-footer">
@@ -996,10 +1043,6 @@
     }
 
     function dismissNotification(id) {
-      const dismissed = JSON.parse(localStorage.getItem('dismissedNotifications') || '[]');
-      dismissed.push(id);
-      localStorage.setItem('dismissedNotifications', JSON.stringify(dismissed));
-
       const banner = document.querySelector(`.notification-banner[data-id="${id}"]`);
       if (banner) {
         // First slide out to the right
