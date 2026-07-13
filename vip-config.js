@@ -1,10 +1,10 @@
 // VIP Configuration - Auto-updated by N8N
-// Last updated: 2026-07-13T04:00:04.676Z
+// Last updated: 2026-07-13T04:00:32.320Z
 // Active VIPs: 10
 
 window.LINKEDIN_AI_VIP_CONFIG = {
-  version: "1783915204676", // Unix timestamp as version
-  lastUpdated: "2026-07-13T04:00:04.676Z",
+  version: "1783915232320", // Unix timestamp as version
+  lastUpdated: "2026-07-13T04:00:32.320Z",
   vips: [
   {
     "name": "Toni Hopponen",
